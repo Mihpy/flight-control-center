@@ -1,0 +1,744 @@
+<!doctype html>
+<html lang="ru" data-theme="auto">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ИнтроСат · Пульт оператора ЦУП</title>
+<meta name="description" content="Пульт оператора центра управления полётами учебного спутника «ИнтроСат»: приём телеметрии, контроль модулей, ориентация, команды и логирование.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2315191d'/%3E%3Ccircle cx='16' cy='16' r='7.5' fill='none' stroke='%23f5f4f1' stroke-width='1.4'/%3E%3Cpath d='M16 3.5v6M16 22.5v6M3.5 16h6M22.5 16h6' stroke='%23f5f4f1' stroke-width='1.4'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<a class="skiplink" href="#main">Перейти к данным телеметрии</a>
+
+<!-- ══ ШАПКА ═══════════════════════════════════════════════════════════════
+     Слева — имя. По центру — состояние аппарата крупным словом: это первое,
+     на что смотрит оператор, и на узком экране оно остаётся видимым.
+     Справа — четыре счётчика сеанса и инструменты.
+     ═══════════════════════════════════════════════════════════════════ -->
+<header class="masthead">
+  <div class="masthead__id">
+    <span class="wordmark">ИнтроСат</span>
+    <span class="wordmark__role">Пульт оператора ЦУП</span>
+  </div>
+
+  <p class="verdict" id="verdict" data-level="3">
+    <span class="verdict__word" id="verdictWord">НЕТ ДАННЫХ</span>
+    <span class="verdict__why" id="verdictWhy">ожидание первого пакета</span>
+  </p>
+
+  <dl class="readouts" aria-label="Ключевые показатели сеанса">
+    <div class="readout"><dt>Время МК</dt><dd id="ro-mk">—</dd></div>
+    <div class="readout"><dt>Принято</dt><dd id="ro-ok">0</dd></div>
+    <div class="readout"><dt>Отклонено</dt><dd id="ro-bad">0</dd></div>
+    <div class="readout"><dt>Частота</dt><dd id="ro-rate">—<span class="unit">Гц</span></dd></div>
+  </dl>
+
+  <div class="masthead__tools">
+    <button type="button" class="btn" id="btnFreeze" aria-pressed="false">Заморозить</button>
+    <button type="button" class="btn btn--icon" id="btnTheme" title="Тема оформления">Тема</button>
+    <button type="button" class="btn btn--icon" id="btnHelp" title="Справка и горячие клавиши" aria-haspopup="dialog">?</button>
+  </div>
+</header>
+
+<!-- ══ ПОЛОСА ТРЕВОГИ ════════════════════════════════════════════════════
+     Показывается только при аварии или внимании. Слева — цветная планка
+     толщиной в шрифт заголовка: читается на периферии зрения, не требует
+     ни рамки, ни тени, ни «ленты опасности».
+     ═══════════════════════════════════════════════════════════════════ -->
+<div class="alarm" id="alarmBar" role="status" aria-live="polite" hidden></div>
+
+<div class="shell">
+
+  <!-- ══ ЛЕВАЯ КОЛОНКА ═════════════════════════════════════════════════════
+       Постоянная панель канала и ленты событий: не переключается вместе
+       с экраном, поэтому состояние связи видно из любого раздела.
+       Блок «Приборы» по умолчанию стоит справа в «Обзоре» и переносится
+       сюда настройкой — см. placeInstruments() в app.js.
+       ═══════════════════════════════════════════════════════════════ -->
+  <aside class="rail" aria-label="Канал и события">
+
+    <div id="instrHomeLeft"></div>
+
+    <section class="rail__section">
+      <header class="rail__head">
+        <h2>Канал</h2>
+      </header>
+      <p class="chan" id="linkState" data-level="wait">
+        <span class="chan__glyph" aria-hidden="true"></span>
+        <span class="chan__text" id="linkLabel">Ожидание данных</span>
+      </p>
+      <dl class="stats stats--rail" id="railStats"></dl>
+    </section>
+
+    <section class="rail__section rail__section--feed">
+      <header class="rail__head">
+        <h2>События</h2>
+        <p class="rail__meta"><button type="button" id="railEventsAll"
+           title="Открыть полный журнал" aria-label="Открыть полный журнал событий">0 записей</button></p>
+      </header>
+      <ul class="feed" id="railEvents"></ul>
+    </section>
+
+  </aside>
+
+  <!-- ══ РАБОЧАЯ ОБЛАСТЬ ═══════════════════════════════════════════════════ -->
+  <div class="stage">
+    <nav class="tabs" aria-label="Экраны пульта">
+      <div role="tablist" aria-label="Экраны пульта" id="tabList">
+        <button type="button" role="tab" id="tab-overview"  aria-controls="view-overview"  aria-selected="true"  data-view="overview"><i>01</i>Обзор</button>
+        <button type="button" role="tab" id="tab-telemetry" aria-controls="view-telemetry" aria-selected="false" data-view="telemetry"><i>02</i>Телеметрия</button>
+        <button type="button" role="tab" id="tab-analysis" aria-controls="view-analysis" aria-selected="false" data-view="analysis"><i>03</i>Анализ</button>
+        <button type="button" role="tab" id="tab-attitude"  aria-controls="view-attitude"  aria-selected="false" data-view="attitude"><i>04</i>Ориентация</button>
+        <button type="button" role="tab" id="tab-commands"  aria-controls="view-commands"  aria-selected="false" data-view="commands"><i>05</i>Команды</button>
+        <button type="button" role="tab" id="tab-journal"   aria-controls="view-journal"   aria-selected="false" data-view="journal"><i>06</i>Журнал</button>
+        <button type="button" role="tab" id="tab-settings"  aria-controls="view-settings"  aria-selected="false" data-view="settings"><i>07</i>Настройки</button>
+      </div>
+    </nav>
+
+    <main id="main">
+
+<!-- ══════════════════ ЭКРАН 01 · ОБЗОР ══════════════════ -->
+<section class="view" id="view-overview" role="tabpanel" aria-labelledby="tab-overview" tabindex="-1">
+  <div class="view__cols">
+
+    <div class="col col--main">
+
+      <section class="block">
+        <header class="block__head">
+          <h2>Напряжение питания</h2>
+          <p class="block__meta" id="ovVoltMeta">В</p>
+        </header>
+        <div class="block__body">
+          <canvas id="ovVoltChart" class="plot" role="img" aria-label="График напряжения батареи во времени"></canvas>
+          <ul class="legend" id="ovVoltLegend"></ul>
+        </div>
+      </section>
+
+      <section class="block">
+        <header class="block__head">
+          <h2>Параметры во времени</h2>
+          <p class="block__meta">
+            <label class="inline-field">окно
+              <select id="tlWindow">
+                <option value="120">2 мин</option>
+                <option value="300" selected>5 мин</option>
+                <option value="900">15 мин</option>
+              </select>
+            </label>
+          </p>
+        </header>
+        <div class="block__body">
+          <div class="seg" role="tablist" aria-label="Группа параметров" id="tlGroups"></div>
+          <canvas id="tlChart" class="plot plot--tall" role="img" aria-label="График выбранных параметров телеметрии"></canvas>
+          <ul class="legend" id="tlLegend"></ul>
+        </div>
+      </section>
+
+    </div>
+
+    <div class="col col--aside">
+
+      <section class="block">
+        <header class="block__head">
+          <h2>Поток данных</h2>
+          <p class="block__meta" id="ovFlowMeta">—</p>
+        </header>
+        <div class="block__body">
+          <dl class="stats" id="ovStats"></dl>
+        </div>
+      </section>
+
+      <section class="block">
+        <header class="block__head">
+          <h2>Целостность полей</h2>
+          <p class="block__meta" id="tlMatrixMeta">—</p>
+        </header>
+        <div class="block__body">
+          <canvas id="tlMatrix" class="plot plot--matrix" role="img"
+                  aria-label="Карта достоверности полей телеметрии по последним пакетам"></canvas>
+          <ul class="legend legend--matrix" id="tlMatrixLegend"></ul>
+        </div>
+      </section>
+
+      <section class="block">
+        <header class="block__head">
+          <h2>Текущий пакет</h2>
+          <p class="block__meta" id="ovRawMeta">—</p>
+        </header>
+        <div class="block__body">
+          <pre class="raw" id="ovRaw" tabindex="0">—</pre>
+          <p class="note" id="ovRawNote"></p>
+        </div>
+      </section>
+
+    </div>
+
+    <!-- ══ КОЛОНКА ПРИБОРОВ ═══════════════════════════════════════════════
+         Правая по умолчанию. Настройка «Отображение → Положение приборов»
+         переносит блок в постоянную левую панель, и колонка исчезает.
+         ═══════════════════════════════════════════════════════════════ -->
+    <div class="col col--instr" id="instrHomeRight">
+      <section class="block" id="instrBlock">
+        <header class="block__head">
+          <h2>Приборы</h2>
+          <p class="block__meta" id="ovModulesMeta">нет данных</p>
+        </header>
+        <div class="block__body">
+          <table class="devices">
+            <caption class="sr-only">Состояние модулей спутника и их текущие показания</caption>
+            <tbody id="ovModules"></tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+
+  </div>
+</section>
+
+<!-- ══════════════════ ЭКРАН 02 · ПОКАЗАТЕЛИ ДАТЧИКОВ ══════════════════ -->
+<section class="view" id="view-telemetry" role="tabpanel" aria-labelledby="tab-telemetry" tabindex="-1" hidden>
+  <div class="view__cols">
+
+    <div class="col col--main">
+
+      <section class="block">
+        <header class="block__head">
+          <h2>Показания датчиков</h2>
+          <p class="block__meta" id="tlFieldsMeta">—</p>
+        </header>
+        <div class="block__body">
+          <div class="scroll-x">
+            <table class="grid grid--fields">
+              <caption class="sr-only">Значения полей последнего пакета: исходное, физическое и признак достоверности</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Поле</th>
+                  <th scope="col" class="num">В пакете</th>
+                  <th scope="col" class="num">Физическое</th>
+                  <th scope="col">Оценка</th>
+                </tr>
+              </thead>
+              <tbody id="tlFields"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+    </div>
+
+    <div class="col col--aside">
+
+      <section class="block">
+        <header class="block__head">
+          <h2>Причины отклонений</h2>
+          <p class="block__meta" id="tlDefectsMeta">—</p>
+        </header>
+        <div class="block__body">
+          <ul class="defects" id="tlDefects"></ul>
+        </div>
+      </section>
+
+      <section class="block">
+        <header class="block__head">
+          <h2>Кадр по полям</h2>
+          <p class="block__meta">исходное и физическое</p>
+        </header>
+        <div class="block__body">
+          <dl class="stats" id="tlRawStats"></dl>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════ ЭКРАН 03 · АНАЛИЗ ТЕЛЕМЕТРИИ ══════════════════ -->
+<section class="view" id="view-analysis" role="tabpanel" aria-labelledby="tab-analysis" tabindex="-1" hidden>
+  <section class="block analysis-tools">
+    <header class="block__head"><h2>Инструменты анализа</h2><p class="block__meta" id="anMeta">ожидание телеметрии</p></header>
+    <div class="block__body">
+      <div class="analysis-controls">
+        <label>Параметр<select id="anField"></select></label>
+        <label>Окно анализа<select id="anWindow"><option value="60">Последняя минута</option><option value="300" selected>Последние 5 минут</option><option value="900">Последние 15 минут</option><option value="all">Весь сеанс</option></select></label>
+        <button type="button" class="btn" id="anExport">Экспорт анализа CSV</button>
+      </div>
+      <p class="analysis-note">Статистика рассчитывается по принятым пакетам. Выбросы отмечаются по робастной оценке MAD; это подсказка для оператора, а не автоматический диагноз неисправности.</p>
+    </div>
+  </section>
+  <div class="analysis-kpis" aria-live="polite">
+    <div><span>Выборка</span><strong id="anCount">—</strong></div><div><span>Среднее</span><strong id="anMean">—</strong></div><div><span>Минимум</span><strong id="anMin">—</strong></div><div><span>Максимум</span><strong id="anMax">—</strong></div><div><span>Отклонение σ</span><strong id="anStd">—</strong></div><div><span>Выбросы</span><strong id="anOutliers">—</strong></div>
+  </div>
+  <section class="block">
+    <header class="block__head"><h2 id="anChartTitle">Изменение параметра</h2><p class="block__meta" id="anChartMeta">—</p></header>
+    <div class="block__body"><canvas id="anChart" class="analysis-chart" role="img" aria-label="График выбранного параметра телеметрии"></canvas><div class="analysis-legend"><span><i></i>значение</span><span><i class="analysis-legend__outlier"></i>подозрительное отклонение</span></div></div>
+  </section>
+  <div class="view__cols">
+    <section class="block"><header class="block__head"><h2>Сводка по параметрам</h2><p class="block__meta">текущее окно</p></header><div class="block__body scroll-x"><table class="grid"><thead><tr><th>Параметр</th><th class="num">Мин.</th><th class="num">Среднее</th><th class="num">Макс.</th><th class="num">Пропуски</th></tr></thead><tbody id="anSummary"></tbody></table></div></section>
+    <section class="block"><header class="block__head"><h2>Подозрительные точки</h2><p class="block__meta" id="anOutlierMeta">—</p></header><div class="block__body scroll-x"><table class="grid"><thead><tr><th>Время МК</th><th class="num">Значение</th><th>Оценка</th></tr></thead><tbody id="anOutlierRows"></tbody></table></div></section>
+  </div>
+</section>
+
+<!-- ══════════════════ ЭКРАН 03 · ОРИЕНТАЦИЯ ══════════════════ -->
+<section class="view" id="view-attitude" role="tabpanel" aria-labelledby="tab-attitude" tabindex="-1" hidden>
+  <div class="view__cols">
+
+    <div class="col col--main">
+      <section class="block">
+        <header class="block__head">
+          <h2>Положение спутника</h2>
+          <p class="block__meta">
+            <button type="button" class="btn btn--quiet" id="atViewReset">Исходный вид</button>
+          </p>
+        </header>
+        <div class="block__body">
+          <canvas id="atScene" class="scene" role="img"
+                  aria-label="Трёхмерная модель спутника в опорной и связанной системах координат"></canvas>
+          <ul class="legend" id="atLegend"></ul>
+          <p class="note" id="atNote"></p>
+        </div>
+      </section>
+    </div>
+
+    <div class="col col--aside">
+
+      <section class="block">
+        <header class="block__head">
+          <h2>Углы ориентации</h2>
+          <p class="block__meta">оценка по датчикам</p>
+        </header>
+        <div class="block__body"><dl class="stats stats--big" id="atAngles"></dl></div>
+      </section>
+
+      <section class="block">
+        <header class="block__head">
+          <h2>Угловые скорости</h2>
+          <p class="block__meta">°/с</p>
+        </header>
+        <div class="block__body"><dl class="stats" id="atRates"></dl></div>
+      </section>
+
+      <section class="block">
+        <header class="block__head">
+          <h2>Магнитное поле</h2>
+          <p class="block__meta">Гс</p>
+        </header>
+        <div class="block__body"><dl class="stats" id="atMag"></dl></div>
+      </section>
+
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════ ЭКРАН 04 · КОМАНДЫ ══════════════════ -->
+<section class="view" id="view-commands" role="tabpanel" aria-labelledby="tab-commands" tabindex="-1" hidden>
+  <div class="view__cols">
+
+    <div class="col col--main">
+
+      <section class="block">
+        <header class="block__head">
+          <h2>Формирование команды</h2>
+          <p class="block__meta"> uplink · телеметрия downlink </p>
+        </header>
+        <div class="block__body">
+          <form class="form form--command" id="cmForm" novalidate>
+            <div class="field">
+              <label for="cmCmd">Команда</label>
+              <select id="cmCmd" name="cmd"></select>
+              <p class="field__hint" id="cmCmdHint"></p>
+            </div>
+            <div class="field">
+              <label for="cmParam">Аргумент</label>
+              <input type="text" id="cmParam" name="param" inputmode="numeric" autocomplete="off"
+                     placeholder="не требуется" disabled aria-describedby="cmParamHint">
+              <p class="field__hint" id="cmParamHint"></p>
+            </div>
+            <p class="field__error" id="cmError" role="alert" hidden></p>
+            <div class="actions">
+              <button type="submit" class="btn btn--primary" id="cmSubmit">Поставить в очередь</button>
+              <button type="button" class="btn btn--quiet" id="cmClear">Очистить очередь</button>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <section class="block">
+        <header class="block__head">
+          <h2>Очередь передачи</h2>
+          <p class="block__meta" id="cmQueueMeta">пусто</p>
+        </header>
+        <div class="block__body">
+          <div class="scroll-x">
+            <table class="grid grid--queue">
+              <caption class="sr-only">Очередь команд и результат передачи</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Время</th><th scope="col">Команда</th>
+                  <th scope="col" class="num">Аргумент</th><th scope="col">Состояние</th>
+                </tr>
+              </thead>
+              <tbody id="cmQueue"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+    </div>
+
+    <div class="col col--aside">
+
+      <section class="block">
+        <header class="block__head">
+          <h2>Канал передачи команд</h2>
+          <p class="block__meta" id="cmChannelMeta">не проверен</p>
+        </header>
+        <div class="block__body">
+          <p class="chan chan--block" id="cmChannel" data-level="wait">
+            <span class="chan__glyph" aria-hidden="true"></span>
+            <span class="chan__text">Канал не проверен</span>
+          </p>
+          <p class="note">
+            Эмулятор телеметрии отдаёт кадры только по <code>GET /telemetry</code> и не принимает команды.
+            При первой отправке пульт проверяет канал одним запросом и, если downlink не объявлен,
+            переходит в локальную модель очереди — с честной пометкой в журнале.
+          </p>
+          <div class="actions">
+            <button type="button" class="btn btn--quiet" id="cmProbe">Проверить канал</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="block">
+        <header class="block__head">
+          <h2>Журнал команд</h2>
+          <p class="block__meta" id="cmLogMeta">—</p>
+        </header>
+        <div class="block__body">
+          <ul class="timeline timeline--tight" id="cmLog"></ul>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════ ЭКРАН 05 · ЖУРНАЛ ══════════════════ -->
+<section class="view" id="view-journal" role="tabpanel" aria-labelledby="tab-journal" tabindex="-1" hidden>
+  <div class="view__cols">
+
+    <div class="col col--main">
+
+      <section class="block">
+        <header class="block__head">
+          <h2>События сеанса</h2>
+          <p class="block__meta" id="jrEventMeta">0 событий
+            <label class="inline-field">уровень
+              <select id="jrLevel" aria-label="Фильтр событий по уровню">
+                <option value="all" selected>все</option>
+                <option value="1">внимание и выше</option>
+                <option value="2">только авария</option>
+              </select>
+            </label>
+            <label class="inline-field">поиск
+              <input type="search" id="jrEventSearch" placeholder="событие или время" autocomplete="off" aria-label="Поиск по событиям сеанса">
+            </label>
+          </p>
+        </header>
+        <div class="block__body">
+          <ul class="timeline" id="jrEvents"></ul>
+        </div>
+      </section>
+
+      <section class="block">
+        <header class="block__head">
+          <h2>Принятые пакеты</h2>
+          <p class="block__meta" id="jrPacketsMeta">—</p>
+        </header>
+        <div class="block__body">
+          <div class="toolbar">
+            <label class="check"><input type="checkbox" id="jrOnlyBad"> только отклонённые</label>
+            <label class="inline-field">поиск
+              <input type="search" id="jrSearch" placeholder="поле, значение, причина" autocomplete="off">
+            </label>
+          </div>
+          <div class="scroll-x">
+            <table class="grid grid--packets">
+              <caption class="sr-only">Журнал принятых и отклонённых пакетов телеметрии</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Время</th><th scope="col">В МК</th>
+                  <th scope="col">Пакет</th><th scope="col">Результат</th>
+                </tr>
+              </thead>
+              <tbody id="jrPackets"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+    </div>
+
+    <div class="col col--aside">
+
+      <section class="block">
+        <header class="block__head">
+          <h2>Отчёт о сеансе</h2>
+          <p class="block__meta" id="jrReportMeta">—</p>
+        </header>
+        <div class="block__body">
+          <dl class="stats" id="jrReport"></dl>
+          <div class="actions">
+            <button type="button" class="btn btn--quiet" id="jrExportCsv">Сохранить лог · CSV</button>
+            <button type="button" class="btn btn--quiet" id="jrExportReport">Сохранить отчёт · TXT</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="block">
+        <header class="block__head">
+          <h2>Работа с записью</h2>
+          <p class="block__meta">журнал сохраняется в браузере</p>
+        </header>
+        <div class="block__body">
+          <div class="actions actions--stack">
+            <button type="button" class="btn" id="jrImport">Открыть лог из файла…</button>
+            <input type="file" id="jrFile" accept=".csv,.txt,.log" hidden>
+            <button type="button" class="btn" id="jrResumeSession" hidden>Продолжить прошлый сеанс</button>
+            <button type="button" class="btn" id="jrToLive" hidden>Вернуться к эмулятору</button>
+          </div>
+          <dl class="stats" id="jrReplayMeta"></dl>
+          <div class="actions" id="jrReplayTools" hidden>
+            <button type="button" class="btn btn--quiet" id="jrReplayToggle">Пауза</button>
+            <label class="inline-field">темп
+              <select id="jrReplaySpeed">
+                <option value="0.25">×0,25</option>
+                <option value="1" selected>×1</option>
+                <option value="4">×4</option>
+                <option value="16">×16</option>
+                <option value="0">без пауз</option>
+              </select>
+            </label>
+          </div>
+          <p class="note">Файл воспроизводится тем же разбором, что и живой поток: годятся выгрузки
+            этого пульта и CSV-файлы эмулятора.</p>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════ ЭКРАН 06 · НАСТРОЙКИ ══════════════════ -->
+<section class="view" id="view-settings" role="tabpanel" aria-labelledby="tab-settings" tabindex="-1" hidden>
+  <div class="view__cols">
+
+    <div class="col col--main">
+
+      <section class="block">
+        <header class="block__head">
+          <h2>Подключение</h2>
+          <p class="block__meta" id="setConnMeta">—</p>
+        </header>
+        <div class="block__body">
+          <div class="form form--rows">
+            <div class="row">
+              <label for="setUrl">Адрес эмулятора</label>
+              <input type="url" id="setUrl" spellcheck="false" autocomplete="off" placeholder="http://127.0.0.1:8765/telemetry">
+              <p class="field__hint">Эмулятор телеметрии: <code>python emulator.py</code> → <code>GET /telemetry</code></p>
+            </div>
+            <div class="row">
+              <label for="setPoll">Интервал опроса, мс</label>
+              <input type="number" id="setPoll" min="40" max="1000" step="10" inputmode="numeric">
+              <p class="field__hint">Эмулятор отдаёт только последний кадр, поэтому опрос должен быть чаще интервала кадров.
+                Пульт подбирает интервал сам по измеренной полноте потока; чтобы задать вручную, измените поле и нажмите «Сохранить настройки».</p>
+            </div>
+            <div class="row">
+              <label for="setStale">Потеря связи через, с</label>
+              <input type="number" id="setStale" min="1" max="60" step="0.5" inputmode="decimal">
+              <p class="field__hint">После этой паузы показания помечаются как устаревшие.</p>
+            </div>
+            <div class="row">
+              <label for="setPre">Преамбула</label>
+              <input type="text" id="setPre" spellcheck="false" autocomplete="off">
+            </div>
+            <div class="row">
+              <label for="setPost">Постамбула</label>
+              <input type="text" id="setPost" spellcheck="false" autocomplete="off">
+            </div>
+          </div>
+          <div class="actions">
+            <button type="button" class="btn btn--primary" id="setSave">Сохранить настройки</button>
+            <button type="button" class="btn btn--quiet" id="setCheck">Проверить соединение</button>
+            <span class="check-result" id="setCheckResult" role="status"></span>
+          </div>
+        </div>
+      </section>
+
+      <section class="block">
+        <header class="block__head">
+          <h2>Пороги состояний</h2>
+          <p class="block__meta">напряжение батареи, В</p>
+        </header>
+        <div class="block__body">
+          <div class="form form--rows">
+            <div class="row">
+              <label for="setVwLo">Внимание ниже</label>
+              <input type="number" id="setVwLo" step="0.01" min="0" inputmode="decimal">
+            </div>
+            <div class="row">
+              <label for="setVwHi">Внимание выше</label>
+              <input type="number" id="setVwHi" step="0.01" min="0" inputmode="decimal">
+            </div>
+            <div class="row">
+              <label for="setVcLo">Авария ниже</label>
+              <input type="number" id="setVcLo" step="0.01" min="0" inputmode="decimal">
+            </div>
+            <div class="row">
+              <label for="setVcHi">Авария выше</label>
+              <input type="number" id="setVcHi" step="0.01" min="0" inputmode="decimal">
+            </div>
+          </div>
+          <p class="note">Значения по умолчанию соответствуют комплекту учебного пульта: 7,2–8,5 В — рабочий
+            диапазон, 6,6 и 8,7 В — границы аварии. Авария имеет приоритет над вниманием.</p>
+        </div>
+      </section>
+
+    </div>
+
+    <div class="col col--aside">
+
+      <section class="block">
+        <header class="block__head">
+          <h2>Отображение</h2>
+          <p class="block__meta">—</p>
+        </header>
+        <div class="block__body">
+          <div class="form form--rows">
+            <div class="row">
+              <label for="setTheme">Тема</label>
+              <select id="setTheme">
+                <option value="auto">как в системе</option>
+                <option value="light">светлая</option>
+                <option value="dark">тёмная</option>
+              </select>
+            </div>
+            <div class="row">
+              <label for="setInstruments">Положение приборов</label>
+              <select id="setInstruments">
+                <option value="right">справа столбиком, в «Обзоре»</option>
+                <option value="left">слева, в постоянной панели</option>
+              </select>
+              <p class="field__hint">Переносит список модулей вместе с показаниями.
+                Слева он виден на всех экранах, справа — только в «Обзоре», зато
+                графики становятся шире.</p>
+            </div>
+            <div class="row">
+              <label for="setThresholds">Пороги на графике питания</label>
+              <select id="setThresholds">
+                <option value="1">показывать</option>
+                <option value="0">скрыть</option>
+              </select>
+            </div>
+            <div class="row">
+              <label for="setAnimate">Мигание аварии</label>
+              <select id="setAnimate">
+                <option value="1">включено</option>
+                <option value="0">выключено</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="block">
+        <header class="block__head">
+          <h2>Данные</h2>
+          <p class="block__meta">—</p>
+        </header>
+        <div class="block__body">
+          <div class="actions actions--stack">
+            <button type="button" class="btn" id="setExport">Выгрузить настройки · JSON</button>
+            <button type="button" class="btn" id="setExportSession">Экспорт сессии · JSON</button>
+            <button type="button" class="btn" id="setImport">Загрузить настройки…</button>
+            <input type="file" id="setFile" accept="application/json,.json" hidden>
+            <button type="button" class="btn" id="setReset">Вернуть значения по умолчанию</button>
+            <button type="button" class="btn btn--danger" id="setPurge">Стереть журнал и сеанс</button>
+          </div>
+          <p class="note">Журнал пакетов, настройки и прошлая сессия хранятся в браузере (localStorage).
+            Данные никуда не отправляются.</p>
+        </div>
+      </section>
+
+      <section class="block">
+        <header class="block__head">
+          <h2>О пульте</h2>
+          <p class="block__meta">сборка</p>
+        </header>
+        <div class="block__body">
+          <dl class="stats" id="setInfo"></dl>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</section>
+
+    </main>
+
+    <footer class="colophon">
+      <p>Хакатон-ЦУП · сезон 2026 · пульт оператора учебного спутника «ИнтроСат»</p>
+      <p>Источник данных: <a href="https://github.com/mcc-hack/data-emulator" target="_blank" rel="noreferrer noopener">mcc-hack/data-emulator</a> · протокол пакета: <code id="footProto">18 полей, разделитель «;»</code></p>
+    </footer>
+  </div>
+</div>
+
+<!-- ══ СПРАВКА ══ -->
+<dialog class="sheet" id="helpSheet" aria-labelledby="helpTitle">
+  <form method="dialog" class="sheet__head">
+    <h2 id="helpTitle">Справка оператора</h2>
+    <button class="btn btn--quiet" value="close" aria-label="Закрыть">Закрыть</button>
+  </form>
+  <div class="sheet__body">
+    <section class="block block--flush">
+      <header class="block__head"><h2>Первый запуск</h2></header>
+      <div class="block__body">
+        <ol class="steps">
+          <li>Установите Python 3.10+ и запустите эмулятор в его папке: <code>python emulator.py</code></li>
+          <li>Выберите файл телеметрии (для проверки — <code>01_normal_flight.csv</code>)</li>
+          <li>В окне появится адрес <code>http://127.0.0.1:8765/telemetry</code> — пульт подхватит его сам</li>
+        </ol>
+      </div>
+    </section>
+    <section class="block block--flush">
+      <header class="block__head"><h2>Горячие клавиши</h2></header>
+      <div class="block__body">
+        <ul class="keys">
+          <li><kbd>1</kbd>…<kbd>6</kbd><span>переключение экранов</span></li>
+          <li><kbd>P</kbd><span>заморозить / возобновить приём</span></li>
+          <li><kbd>G</kbd><span>следующая группа графика</span></li>
+          <li><kbd>L</kbd><span>показать или скрыть легенду графика</span></li>
+          <li><kbd>?</kbd><span>эта справка</span></li>
+          <li><kbd>Esc</kbd><span>закрыть окно</span></li>
+        </ul>
+      </div>
+    </section>
+    <section class="block block--flush">
+      <header class="block__head"><h2>Цвета состояний</h2></header>
+      <div class="block__body">
+        <ul class="legend legend--states">
+          <li><i class="swatch swatch--ok"></i>норма — показания в допуске</li>
+          <li><i class="swatch swatch--warn"></i>внимание — данные есть, но требуют проверки</li>
+          <li><i class="swatch swatch--bad"></i>авария — модуль недоступен или параметр вне допуска</li>
+        </ul>
+      </div>
+    </section>
+  </div>
+</dialog>
+
+<script src="js/telemetry.js"></script>
+<script src="js/analysis.js"></script>
+<script src="js/views.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,3290 @@
+<!doctype html>
+<!-- Собрано из index.html + css/app.css + js/{telemetry,analysis,views,app}.js + README.md. Открывается двойным щелчком, сборка не требуется. -->
+
+<html lang="ru" data-theme="auto">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ИнтроСат · Пульт оператора ЦУП</title>
+<meta name="description" content="Пульт оператора центра управления полётами учебного спутника «ИнтроСат»: приём телеметрии, контроль модулей, ориентация, команды и логирование.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2315191d'/%3E%3Ccircle cx='16' cy='16' r='7.5' fill='none' stroke='%23f5f4f1' stroke-width='1.4'/%3E%3Cpath d='M16 3.5v6M16 22.5v6M3.5 16h6M22.5 16h6' stroke='%23f5f4f1' stroke-width='1.4'/%3E%3C/svg%3E">
+<style>
+/* css/app.css */
+:root{color-scheme:light;--paper:#f4f3f0;--surface:#fbfaf8;--ink:#15191d;--ink-2:#414a52;--ink-3:#737d85;--rule:#dcd8d0;--rule-2:#bdb8ae;--hover:rgba(21,25,29,.045);--ok:#2f6b46;--ok-bg:#e7efe8;--warn:#86610f;--warn-bg:#f6eed9;--bad:#a32a1e;--bad-bg:#f9e5e1;--accent:#25506f;--c1:#15191d;--c2:#25506f;--c3:#8a5a2b;--c4:#4a6b52;--serif:"Iowan Old Style",Charter,Georgia,"Times New Roman",serif;--sans:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;--mono:ui-monospace,"SF Mono","JetBrains Mono",Menlo,Consolas,"DejaVu Sans Mono",monospace;--pad:32px;--col-gap:44px}@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--paper:#14171a;--surface:#191d21;--ink:#e7eaec;--ink-2:#a9b1b7;--ink-3:#7b848c;--rule:#272d32;--rule-2:#3a4249;--hover:rgba(255,255,255,.055);--ok:#64b487;--ok-bg:#16241c;--warn:#d6aa41;--warn-bg:#27200f;--bad:#e4735f;--bad-bg:#2b1713;--accent:#8ab4d8;--c1:#e7eaec;--c2:#8ab4d8;--c3:#cf9455;--c4:#84b392}}:root[data-theme="dark"]{color-scheme:dark;--paper:#14171a;--surface:#191d21;--ink:#e7eaec;--ink-2:#a9b1b7;--ink-3:#7b848c;--rule:#272d32;--rule-2:#3a4249;--hover:rgba(255,255,255,.055);--ok:#64b487;--ok-bg:#16241c;--warn:#d6aa41;--warn-bg:#27200f;--bad:#e4735f;--bad-bg:#2b1713;--accent:#8ab4d8;--c1:#e7eaec;--c2:#8ab4d8;--c3:#cf9455;--c4:#84b392}*{box-sizing:border-box}[hidden]{display:none !important}body{margin:0;background:var(--paper);color:var(--ink);font:400 15px/1.5 var(--sans);font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased}code,kbd,pre,.num,.mono{font-family:var(--mono)}code{font-size:.92em}p{margin:0 0 10px}h1,h2,h3{margin:0;font-weight:600}a{color:var(--accent);text-underline-offset:3px}:focus-visible{outline:2px solid var(--accent);outline-offset:2px}.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap}.skiplink{position:absolute;left:8px;top:-60px;z-index:20;padding:10px 16px;background:var(--ink);color:var(--paper);font-size:13px;text-decoration:none;transition:top .12s linear}.skiplink:focus{top:8px}.masthead{display:grid;grid-template-columns:auto minmax(0,1fr) auto auto;align-items:center;gap:12px 30px;padding:13px var(--pad);border-bottom:1px solid var(--rule)}.wordmark{display:block;font:400 23px/1.05 var(--serif);letter-spacing:.01em}.wordmark__role{display:block;margin-top:4px;font:500 10.5px/1 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3)}.chan{display:inline-flex;align-items:center;gap:10px;margin:0;font-size:13.5px;font-weight:500;color:var(--ink-2);min-width:0}.chan__glyph{flex:none;width:10px;height:10px;background:currentColor;color:var(--ink-3)}.chan__text{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.chan[data-level="0"]{color:var(--ok)}.chan[data-level="1"]{color:var(--warn)}.chan[data-level="2"]{color:var(--bad)}.chan[data-level="0"] .chan__glyph{border-radius:50%}.chan[data-level="1"] .chan__glyph{clip-path:polygon(50% 0,100% 100%,0 100%)}.chan[data-level="2"] .chan__glyph{box-shadow:inset 0 0 0 2px var(--paper)}.chan[data-level="2"] .chan__glyph{animation:beacon 1.1s steps(2,end) infinite}.chan--block{padding:10px 0 12px;border-bottom:1px solid var(--rule)}@keyframes beacon{50%{opacity:.25}}body.no-motion .chan[data-level="2"] .chan__glyph{animation:none}.readouts{display:flex;margin:0;border-left:1px solid var(--rule);border-right:1px solid var(--rule)}.readout{padding:0 20px}.readout + .readout{border-left:1px solid var(--rule)}.readout dt{font:500 10px/1.4 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);white-space:nowrap}.readout dd{margin:3px 0 0;font:500 18px/1.1 var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}.readout dd .unit{font-size:10.5px;color:var(--ink-3);margin-left:2px}.masthead__tools{display:flex;gap:6px}.alarm{padding:11px var(--pad);border-bottom:1px solid var(--rule);background:var(--bad-bg);box-shadow:inset 4px 0 0 var(--bad);font-size:14px;color:var(--ink);background-image:repeating-linear-gradient(135deg,color-mix(in srgb,var(--bad) 9%,transparent) 0 6px,transparent 6px 12px)}.alarm[data-level="1"]{background-color:var(--warn-bg);box-shadow:inset 4px 0 0 var(--warn);background-image:repeating-linear-gradient(135deg,color-mix(in srgb,var(--warn) 11%,transparent) 0 6px,transparent 6px 12px)}.alarm__label{font:600 11px/1 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--bad);margin-right:12px}.alarm[data-level="1"] .alarm__label{color:var(--warn)}.alarm__text{color:var(--ink)}.tabs{padding:0 var(--pad);border-bottom:1px solid var(--rule);overflow-x:auto}[role="tablist"]{display:flex;gap:4px}[role="tab"]{padding:12px 15px 11px;border:0;background:none;border-bottom:2px solid transparent;font:500 14px var(--sans);color:var(--ink-3);cursor:pointer;white-space:nowrap}[role="tab"] i{font:500 10.5px var(--mono);font-style:normal;color:var(--rule-2);margin-right:9px}[role="tab"]:hover{color:var(--ink)}[role="tab"][aria-selected="true"]{color:var(--ink);border-bottom-color:var(--ink)}[role="tab"][aria-selected="true"] i{color:var(--accent)}.seg{display:flex;flex-wrap:wrap;gap:2px 20px;margin-bottom:14px}.seg [role="tab"]{padding:3px 0 5px;font-size:13px}.seg [role="tab"] i{display:none}.view{padding:0 var(--pad) 56px}.view__cols{max-width:1520px;margin:0 auto;display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr)}.col--main{padding-right:var(--col-gap);min-width:0}.col--aside{padding-left:var(--col-gap);border-left:1px solid var(--rule);min-width:0}.block{padding:26px 0 22px;border-bottom:1px solid var(--rule)}.col>.block:last-child{border-bottom:0}.block--flush{padding-bottom:18px}.block__head{display:flex;align-items:baseline;justify-content:space-between;gap:10px 20px;margin-bottom:15px}.block__head h2{font:600 12px/1.3 var(--sans);letter-spacing:.13em;text-transform:uppercase;color:var(--ink-2)}.block__head h2 i{font:500 11px var(--mono);font-style:normal;color:var(--ink-3);margin-right:10px}.block__meta{margin:0;font:400 12px var(--mono);color:var(--ink-3);text-align:right;white-space:nowrap}.grid{width:100%;border-collapse:collapse;font-size:14px}.grid thead th{padding:0 18px 8px 0;text-align:left;vertical-align:bottom;font:500 10.5px var(--sans);letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);border-bottom:1px solid var(--rule-2);white-space:nowrap}.grid td{padding:11px 18px 11px 0;border-bottom:1px solid var(--rule);vertical-align:top}.grid tbody th{padding:11px 18px 11px 0;border-bottom:1px solid var(--rule);text-align:left;vertical-align:top;font-weight:600;font-size:14px}.grid th:last-child,.grid td:last-child{padding-right:0}.grid tbody tr:last-child td{border-bottom:0}.grid tbody tr:last-child th{border-bottom:0}.grid tbody tr:hover td,.grid tbody tr:hover th{background:var(--hover)}.grid .num{text-align:right;font-family:var(--mono);font-size:13.5px;white-space:nowrap}.grid--modules td:nth-child(2){font-family:var(--mono);font-size:13.5px;white-space:nowrap}.mod-name{font-weight:600}.mod-role{display:block;margin-top:2px;font-size:12.5px;font-weight:400;color:var(--ink-3)}.state{display:inline-flex;align-items:baseline;gap:9px;font-size:13px;font-weight:500;white-space:nowrap}.state::before{content:"";width:9px;height:9px;background:currentColor;align-self:center;flex:none}.state[data-level="0"]{color:var(--ok)}.state[data-level="1"]{color:var(--warn)}.state[data-level="1"]::before{clip-path:polygon(50% 0,100% 100%,0 100%)}.state[data-level="2"]{color:var(--bad)}.state[data-level="2"]::before{box-shadow:inset 0 0 0 2px var(--paper)}.state[data-level="2"].is-alarm::before{animation:beacon 1.1s steps(2,end) infinite}.state__why{display:block;margin-top:3px;font-size:12.5px;font-weight:400;color:var(--ink-3);white-space:normal}.stats{display:grid;grid-template-columns:minmax(0,1fr) auto;margin:0;font-size:13.5px}.stats dt{padding:8px 20px 8px 0;color:var(--ink-2);border-bottom:1px solid var(--rule)}.stats dd{margin:0;padding:8px 0;text-align:right;font:500 14px var(--mono);border-bottom:1px solid var(--rule);white-space:nowrap}.stats dt:last-of-type,.stats dd:last-of-type{border-bottom:0}.stats--big dd{font-size:21px}.stats dd .unit{font-size:11px;color:var(--ink-3);margin-left:3px}.stats dd[data-level="1"]{color:var(--warn)}.stats dd[data-level="2"]{color:var(--bad)}.raw{margin:0;padding:12px 14px;min-height:74px;border:1px solid var(--rule);background:var(--surface);font:12px/1.7 var(--mono);white-space:pre-wrap;word-break:break-all}.raw[data-level="2"]{border-color:var(--bad)}.note{margin:10px 0 0;max-width:66ch;font-size:13px;color:var(--ink-2)}.timeline{list-style:none;margin:0;padding:0}.timeline li{display:grid;grid-template-columns:68px 10px minmax(0,1fr);gap:0 11px;padding:9px 0;border-bottom:1px solid var(--rule);font-size:13.5px}.timeline li:last-child{border-bottom:0}.timeline time{font:400 12px/1.5 var(--mono);color:var(--ink-3)}.timeline .mark{width:9px;height:9px;margin-top:5px;background:var(--ink-3)}.timeline .mark[data-level="0"]{background:var(--ok);border-radius:50%}.timeline .mark[data-level="1"]{background:var(--warn);clip-path:polygon(50% 0,100% 100%,0 100%)}.timeline .mark[data-level="2"]{background:var(--bad);box-shadow:inset 0 0 0 2px var(--paper)}.timeline .msg{color:var(--ink-2)}.timeline .msg b{color:var(--ink);font-weight:600}.timeline--tight li{grid-template-columns:68px 10px minmax(0,1fr);padding:7px 0;font-size:13px}.defects{list-style:none;margin:0;padding:0}.defects li{padding:9px 0;border-bottom:1px solid var(--rule)}.defects li:last-child{border-bottom:0}.defects .row{display:flex;justify-content:space-between;gap:14px;font-size:13.5px}.defects .row span:first-child{color:var(--ink-2)}.defects .row span:last-child{font-family:var(--mono);white-space:nowrap}.defects .bar{height:3px;margin-top:7px;background:var(--rule)}.defects .bar i{display:block;height:100%;background:var(--bad)}.plot{display:block;width:100%;height:200px}.plot--tall{height:286px}.plot--matrix{height:248px}.scene{display:block;width:100%;height:min(56vh,440px);touch-action:none;cursor:grab}.scene:active{cursor:grabbing}.legend{list-style:none;display:flex;flex-wrap:wrap;gap:7px 22px;margin:12px 0 0;padding:0;font-size:13px}.legend li{display:flex;align-items:baseline;gap:8px}.legend button{display:inline-flex;align-items:baseline;gap:8px;padding:2px 0;border:0;background:none;font:inherit;color:inherit;cursor:pointer}.legend button:hover{color:var(--accent)}.legend button[aria-pressed="false"]{opacity:.38}.legend .key{display:inline-block;width:20px;border-top:2px solid}.legend .val{font-family:var(--mono);font-size:12.5px;color:var(--ink-2)}.legend--matrix{gap:6px 18px;font-size:12.5px;color:var(--ink-2)}.legend .swatch{display:inline-block;width:11px;height:11px}.swatch--ok{background:var(--ok)}.swatch--warn{background:var(--warn)}.swatch--bad{background:var(--bad)}.swatch--none{background:var(--rule)}.legend--states{flex-direction:column;gap:8px}.form--command{max-width:620px}.form .field{margin-bottom:16px}.form label,.form--rows label{display:block;margin-bottom:5px;font-size:13.5px;color:var(--ink-2)}.form--rows .row{display:grid;grid-template-columns:210px minmax(0,340px);gap:3px 22px;align-items:center;padding:12px 0;border-bottom:1px solid var(--rule)}.form--rows .row:last-of-type{border-bottom:0}.form--rows label{margin:0}.form--rows .field__hint{grid-column:2;margin:0}.field__hint{margin:5px 0 0;font-size:12px;color:var(--ink-3);max-width:60ch}.field__error{margin:0 0 12px;font-size:13px;color:var(--bad)}input[type="text"],input[type="url"],input[type="number"],input[type="search"],select{width:100%;padding:7px 10px;border:1px solid var(--rule-2);border-radius:2px;background:var(--surface);color:var(--ink);font:400 14px var(--sans)}input:focus,select:focus{border-color:var(--accent)}input:disabled{background:var(--hover);color:var(--ink-3);cursor:not-allowed}.inline-field{display:inline-flex;align-items:center;gap:7px;font-size:12px;color:var(--ink-3)}.inline-field select,.inline-field input{width:auto;padding:3px 6px;font-size:12.5px}.check{display:inline-flex;align-items:center;gap:7px;font-size:13px;color:var(--ink-2)}.check input{width:15px;height:15px;accent-color:var(--accent)}.btn{font:500 13px var(--sans);padding:7px 13px;border:1px solid var(--rule-2);border-radius:2px;background:var(--surface);color:var(--ink);cursor:pointer}.btn:hover{border-color:var(--ink-3);background:var(--hover)}.btn[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--paper)}.btn--primary{background:var(--ink);border-color:var(--ink);color:var(--paper)}.btn--primary:hover{background:#000;border-color:#000;color:#fff}:root[data-theme="dark"] .btn--primary:hover{background:#fff;border-color:#fff;color:#14171a}.btn--quiet{border-color:var(--rule);background:none;color:var(--ink-2)}.btn--danger{color:var(--bad);border-color:color-mix(in srgb,var(--bad) 40%,var(--rule))}.btn--icon{min-width:36px;padding:7px 10px}.btn:disabled{opacity:.45;cursor:not-allowed}.actions{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:14px}.actions--stack{flex-direction:column;align-items:stretch}.actions--stack .btn{width:100%}.check-result{font:400 12.5px var(--mono);color:var(--ink-3)}.check-result[data-level="0"]{color:var(--ok)}.check-result[data-level="1"]{color:var(--warn)}.check-result[data-level="2"]{color:var(--bad)}.toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:10px 20px;padding-bottom:14px}.toolbar .inline-field input{width:220px}.scroll-x{overflow-x:auto}.sheet{width:min(660px,calc(100% - 32px));max-height:84vh;padding:0;border:1px solid var(--rule-2);border-radius:0;background:var(--paper);color:var(--ink)}.sheet::backdrop{background:rgba(12,14,16,.45)}.sheet__head{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:16px 24px;border-bottom:1px solid var(--rule)}.sheet__head h2{font:600 13px/1.3 var(--sans);letter-spacing:.12em;text-transform:uppercase}.sheet__body{padding:0 24px 20px;overflow-y:auto;max-height:calc(84vh - 60px)}.sheet__body .block:first-child{padding-top:20px}.steps{counter-reset:step;list-style:none;margin:0;padding:0}.steps li{position:relative;padding:6px 0 6px 30px;font-size:13.5px;color:var(--ink-2)}.steps li::before{content:counter(step,decimal-leading-zero);position:absolute;left:0;top:8px;font:500 11px var(--mono);color:var(--ink-3)}.keys{list-style:none;margin:0;padding:0}.keys li{display:flex;align-items:baseline;gap:10px;padding:5px 0;font-size:13.5px;color:var(--ink-2)}.keys span{color:var(--ink-3);font-size:13px}kbd{min-width:20px;padding:1px 6px;text-align:center;border:1px solid var(--rule-2);border-bottom-width:2px;border-radius:2px;background:var(--surface);font:500 11.5px var(--mono);color:var(--ink)}.colophon{max-width:1520px;margin:0 auto;padding:22px var(--pad) 46px;border-top:1px solid var(--rule);font-size:12.5px;color:var(--ink-3)}.colophon p{margin:0 0 5px}@media (max-width:1180px){.masthead{grid-template-columns:auto minmax(0,1fr);row-gap:14px}.readouts{border-right:0}.masthead__tools{grid-column:2;justify-self:end}.view__cols{grid-template-columns:minmax(0,1fr)}.col--main{padding-right:0}.col--aside{padding-left:0;border-left:0}.col--aside .block:first-child{border-top:0}}@media (max-width:760px){:root{--pad:18px;--col-gap:26px}.masthead{grid-template-columns:minmax(0,1fr) auto}.masthead__id{grid-column:1 / -1}.chan{grid-column:1;grid-row:2}.masthead__tools{grid-column:2;grid-row:2;justify-self:end}.readouts{grid-column:1 / -1}.readouts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 0;padding:4px 0}.readout{padding:0 16px 0 0}.readout:nth-child(odd){border-left:0}.readout:nth-child(even){border-left:1px solid var(--rule);padding-left:16px}.readouts{border-left:0}.view{padding-bottom:32px}.block{padding:20px 0 18px}.block__head{flex-wrap:wrap}.block__meta{text-align:left}.form--rows .row{grid-template-columns:minmax(0,1fr)}.form--rows .field__hint{grid-column:1}.plot{height:176px}.plot--tall{height:236px}.scene{height:62vw;min-height:260px}.toolbar .inline-field input{width:100%}.grid--modules thead{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}.grid--modules tbody tr{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 14px;padding:13px 0;border-bottom:1px solid var(--rule)}.grid--modules tbody th,.grid--modules td{border:0;padding:0}.grid--modules tbody th{grid-column:1;grid-row:1}.grid--modules td:nth-child(2){grid-column:1 / -1;white-space:normal;margin-top:4px}.grid--modules td:nth-child(3){grid-column:2;grid-row:1;text-align:right}.grid--modules td:nth-child(3) .state__why{display:block;text-align:left}}@media (prefers-reduced-motion:reduce){.chan[data-level="2"] .chan__glyph,.state[data-level="2"].is-alarm::before{animation:none}.skiplink{transition:none}}
+</style>
+</head>
+<body>
+<a class="skiplink" href="#main">Перейти к данным телеметрии</a>
+
+<!-- ══ ШАПКА: идентификация приложения, состояние канала, ключевые счётчики ══ -->
+<header class="masthead">
+  <div class="masthead__id">
+    <span class="wordmark">ИнтроСат</span>
+    <span class="wordmark__role">Пульт оператора ЦУП</span>
+  </div>
+
+  <p class="chan" id="linkState" data-level="wait">
+    <span class="chan__glyph" aria-hidden="true"></span>
+    <span class="chan__text" id="linkLabel">Ожидание данных</span>
+  </p>
+
+  <dl class="readouts" aria-label="Ключевые показатели сеанса">
+    <div class="readout"><dt>Время МК</dt><dd id="ro-mk">—</dd></div>
+    <div class="readout"><dt>Принято</dt><dd id="ro-ok">0</dd></div>
+    <div class="readout"><dt>Отклонено</dt><dd id="ro-bad">0</dd></div>
+    <div class="readout"><dt>Частота</dt><dd id="ro-rate">—<span class="unit">Гц</span></dd></div>
+  </dl>
+
+  <div class="masthead__tools">
+    <button type="button" class="btn" id="btnFreeze" aria-pressed="false">Заморозить</button>
+    <button type="button" class="btn btn--icon" id="btnTheme" title="Тема оформления">Тема</button>
+    <button type="button" class="btn btn--icon" id="btnHelp" title="Справка и горячие клавиши" aria-haspopup="dialog">?</button>
+  </div>
+</header>
+
+<!-- ══ ПОЛОСА ТРЕВОГИ: единственный элемент интерфейса, который перетягивает на себя внимание ══ -->
+<div class="alarm" id="alarmBar" role="status" aria-live="polite" hidden></div>
+
+<!-- ══ НАВИГАЦИЯ ПО ЭКРАНАМ ══ -->
+<nav class="tabs" aria-label="Экраны пульта">
+  <div role="tablist" aria-label="Экраны пульта" id="tabList">
+    <button type="button" role="tab" id="tab-overview"  aria-controls="view-overview"  aria-selected="true"  data-view="overview"><i>01</i>Обзор</button>
+    <button type="button" role="tab" id="tab-telemetry" aria-controls="view-telemetry" aria-selected="false" data-view="telemetry"><i>02</i>Телеметрия</button>
+    <button type="button" role="tab" id="tab-attitude"  aria-controls="view-attitude"  aria-selected="false" data-view="attitude"><i>03</i>Ориентация</button>
+    <button type="button" role="tab" id="tab-commands"  aria-controls="view-commands"  aria-selected="false" data-view="commands"><i>04</i>Команды</button>
+    <button type="button" role="tab" id="tab-journal"   aria-controls="view-journal"   aria-selected="false" data-view="journal"><i>05</i>Журнал</button>
+    <button type="button" role="tab" id="tab-settings"  aria-controls="view-settings"  aria-selected="false" data-view="settings"><i>06</i>Настройки</button>
+  </div>
+</nav>
+
+<main id="main">
+
+<!-- ══════════════════ ЭКРАН 01 · ОБЗОР ══════════════════ -->
+<section class="view" id="view-overview" role="tabpanel" aria-labelledby="tab-overview" tabindex="-1">
+  <div class="view__cols">
+
+    <div class="col col--main">
+
+      <section class="block">
+        <header class="block__head">
+          <h2><i>01</i>Состояние модулей</h2>
+          <p class="block__meta" id="ovModulesMeta">нет данных</p>
+        </header>
+        <div class="block__body">
+          <table class="grid grid--modules">
+            <caption class="sr-only">Состояние модулей спутника и их текущие показания</caption>
+            <thead>
+              <tr><th scope="col">Модуль</th><th scope="col">Показание</th><th scope="col">Состояние</th></tr>
+            </thead>
+            <tbody id="ovModules"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="block">
+        <header class="block__head">
+          <h2><i>02</i>Напряжение питания</h2>
+          <p class="block__meta" id="ovVoltMeta">В · последние 60 с</p>
+        </header>
+        <div class="block__body">
+          <canvas id="ovVoltChart" class="plot" role="img" aria-label="График напряжения батареи во времени"></canvas>
+          <ul class="legend" id="ovVoltLegend"></ul>
+        </div>
+      </section>
+
+    </div>
+
+    <div class="col col--aside">
+
+      <section class="block">
+        <header class="block__head">
+          <h2><i>03</i>Поток данных</h2>
+          <p class="block__meta" id="ovFlowMeta">—</p>
+        </header>
+        <div class="block__body">
+          <dl class="stats" id="ovStats"></dl>
+        </div>
+      </section>
+
+      <section class="block">
+        <header class="block__head">
+          <h2><i>04</i>Текущий пакет</h2>
+          <p class="block__meta" id="ovRawMeta">—</p>
+        </header>
+        <div class="block__body">
+          <pre class="raw" id="ovRaw" tabindex="0">—</pre>
+          <p class="note" id="ovRawNote"></p>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════ ЭКРАН 02 · ТЕЛЕМЕТРИЯ ══════════════════ -->
+<section class="view" id="view-telemetry" role="tabpanel" aria-labelledby="tab-telemetry" tabindex="-1" hidden>
+  <div class="view__cols">
+
+    <div class="col col--main">
+
+      <section class="block">
+        <header class="block__head">
+          <h2><i>01</i>Динамика параметров</h2>
+          <p class="block__meta">
+            <label class="inline-field">окно
+              <select id="tlWindow">
+                <option value="120">2 мин</option>
+                <option value="300" selected>5 мин</option>
+                <option value="900">15 мин</option>
+              </select>
+            </label>
+          </p>
+        </header>
+        <div class="block__body">
+          <div class="seg" role="tablist" aria-label="Группа параметров" id="tlGroups"></div>
+          <canvas id="tlChart" class="plot plot--tall" role="img" aria-label="График выбранных параметров телеметрии"></canvas>
+          <ul class="legend" id="tlLegend"></ul>
+        </div>
+      </section>
+
+      <section class="block">
+        <header class="block__head">
+          <h2><i>02</i>Показания датчиков</h2>
+          <p class="block__meta" id="tlFieldsMeta">—</p>
+        </header>
+        <div class="block__body">
+          <div class="scroll-x">
+            <table class="grid grid--fields">
+              <caption class="sr-only">Значения полей последнего пакета: исходное, физическое и признак достоверности</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Поле</th>
+                  <th scope="col" class="num">В пакете</th>
+                  <th scope="col" class="num">Физическое</th>
+                  <th scope="col">Оценка</th>
+                </tr>
+              </thead>
+              <tbody id="tlFields"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+    </div>
+
+    <div class="col col--aside">
+
+      <section class="block">
+        <header class="block__head">
+          <h2><i>03</i>Целостность полей</h2>
+          <p class="block__meta" id="tlMatrixMeta">—</p>
+        </header>
+        <div class="block__body">
+          <canvas id="tlMatrix" class="plot plot--matrix" role="img"
+                  aria-label="Карта достоверности полей телеметрии по последним пакетам"></canvas>
+          <ul class="legend legend--matrix" id="tlMatrixLegend"></ul>
+        </div>
+      </section>
+
+      <section class="block">
+        <header class="block__head">
+          <h2><i>04</i>Причины отклонений</h2>
+          <p class="block__meta" id="tlDefectsMeta">—</p>
+        </header>
+        <div class="block__body">
+          <ul class="defects" id="tlDefects"></ul>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════ ЭКРАН 03 · ОРИЕНТАЦИЯ ══════════════════ -->
+<section class="view" id="view-attitude" role="tabpanel" aria-labelledby="tab-attitude" tabindex="-1" hidden>
+  <div class="view__cols">
+
+    <div class="col col--main">
+      <section class="block">
+        <header class="block__head">
+          <h2><i>01</i>Положение спутника</h2>
+          <p class="block__meta">
+            <button type="button" class="btn btn--quiet" id="atViewReset">Исходный вид</button>
+          </p>
+        </header>
+        <div class="block__body">
+          <canvas id="atScene" class="scene" role="img"
+                  aria-label="Трёхмерная модель спутника в опорной и связанной системах координат"></canvas>
+          <ul class="legend" id="atLegend"></ul>
+          <p class="note" id="atNote"></p>
+        </div>
+      </section>
+    </div>
+
+    <div class="col col--aside">
+
+      <section class="block">
+        <header class="block__head">
+          <h2><i>02</i>Углы ориентации</h2>
+          <p class="block__meta">оценка по датчикам</p>
+        </header>
+        <div class="block__body"><dl class="stats stats--big" id="atAngles"></dl></div>
+      </section>
+
+      <section class="block">
+        <header class="block__head">
+          <h2><i>03</i>Угловые скорости</h2>
+          <p class="block__meta">°/с</p>
+        </header>
+        <div class="block__body"><dl class="stats" id="atRates"></dl></div>
+      </section>
+
+      <section class="block">
+        <header class="block__head">
+          <h2><i>04</i>Магнитное поле</h2>
+          <p class="block__meta">Гс</p>
+        </header>
+        <div class="block__body"><dl class="stats" id="atMag"></dl></div>
+      </section>
+
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════ ЭКРАН 04 · КОМАНДЫ ══════════════════ -->
+<section class="view" id="view-commands" role="tabpanel" aria-labelledby="tab-commands" tabindex="-1" hidden>
+  <div class="view__cols">
+
+    <div class="col col--main">
+
+      <section class="block">
+        <header class="block__head">
+          <h2><i>01</i>Формирование команды</h2>
+          <p class="block__meta"> uplink · телеметрия downlink </p>
+        </header>
+        <div class="block__body">
+          <form class="form form--command" id="cmForm" novalidate>
+            <div class="field">
+              <label for="cmCmd">Команда</label>
+              <select id="cmCmd" name="cmd"></select>
+              <p class="field__hint" id="cmCmdHint"></p>
+            </div>
+            <div class="field">
+              <label for="cmParam">Аргумент</label>
+              <input type="text" id="cmParam" name="param" inputmode="numeric" autocomplete="off"
+                     placeholder="не требуется" disabled aria-describedby="cmParamHint">
+              <p class="field__hint" id="cmParamHint"></p>
+            </div>
+            <p class="field__error" id="cmError" role="alert" hidden></p>
+            <div class="actions">
+              <button type="submit" class="btn btn--primary" id="cmSubmit">Поставить в очередь</button>
+              <button type="button" class="btn btn--quiet" id="cmClear">Очистить очередь</button>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <section class="block">
+        <header class="block__head">
+          <h2><i>02</i>Очередь передачи</h2>
+          <p class="block__meta" id="cmQueueMeta">пусто</p>
+        </header>
+        <div class="block__body">
+          <div class="scroll-x">
+            <table class="grid grid--queue">
+              <caption class="sr-only">Очередь команд и результат передачи</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Время</th><th scope="col">Команда</th>
+                  <th scope="col" class="num">Аргумент</th><th scope="col">Состояние</th>
+                </tr>
+              </thead>
+              <tbody id="cmQueue"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+    </div>
+
+    <div class="col col--aside">
+
+      <section class="block">
+        <header class="block__head">
+          <h2><i>03</i>Канал передачи команд</h2>
+          <p class="block__meta" id="cmChannelMeta">не проверен</p>
+        </header>
+        <div class="block__body">
+          <p class="chan chan--block" id="cmChannel" data-level="wait">
+            <span class="chan__glyph" aria-hidden="true"></span>
+            <span class="chan__text">Канал не проверен</span>
+          </p>
+          <p class="note" id="cmChannelNote">
+            Эмулятор телеметрии отдаёт кадры только по <code>GET /telemetry</code> и не принимает команды.
+            При первой отправке пульт проверяет канал одним запросом и, если downlink не объявлен,
+            переходит в локальную модель очереди — с честной пометкой в журнале.
+          </p>
+          <div class="actions">
+            <button type="button" class="btn btn--quiet" id="cmProbe">Проверить канал</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="block">
+        <header class="block__head">
+          <h2><i>04</i>Журнал команд</h2>
+          <p class="block__meta" id="cmLogMeta">—</p>
+        </header>
+        <div class="block__body">
+          <ul class="timeline timeline--tight" id="cmLog"></ul>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════ ЭКРАН 05 · ЖУРНАЛ ══════════════════ -->
+<section class="view" id="view-journal" role="tabpanel" aria-labelledby="tab-journal" tabindex="-1" hidden>
+  <div class="view__cols">
+
+    <div class="col col--main">
+
+      <section class="block">
+        <header class="block__head">
+          <h2><i>01</i>События</h2>
+          <p class="block__meta">
+            <label class="inline-field">уровень
+              <select id="jrLevel">
+                <option value="all" selected>все</option>
+                <option value="1">внимание и выше</option>
+                <option value="2">только авария</option>
+              </select>
+            </label>
+          </p>
+        </header>
+        <div class="block__body">
+          <ul class="timeline" id="jrEvents"></ul>
+        </div>
+      </section>
+
+      <section class="block">
+        <header class="block__head">
+          <h2><i>02</i>Принятые пакеты</h2>
+          <p class="block__meta" id="jrPacketsMeta">—</p>
+        </header>
+        <div class="block__body">
+          <div class="toolbar">
+            <label class="check"><input type="checkbox" id="jrOnlyBad"> только отклонённые</label>
+            <label class="inline-field">поиск
+              <input type="search" id="jrSearch" placeholder="поле, значение, причина" autocomplete="off">
+            </label>
+          </div>
+          <div class="scroll-x">
+            <table class="grid grid--packets">
+              <caption class="sr-only">Журнал принятых и отклонённых пакетов телеметрии</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Время</th><th scope="col">В МК</th>
+                  <th scope="col">Пакет</th><th scope="col">Результат</th>
+                </tr>
+              </thead>
+              <tbody id="jrPackets"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+    </div>
+
+    <div class="col col--aside">
+
+      <section class="block">
+        <header class="block__head">
+          <h2><i>03</i>Отчёт о сеансе</h2>
+          <p class="block__meta" id="jrReportMeta">—</p>
+        </header>
+        <div class="block__body">
+          <dl class="stats" id="jrReport"></dl>
+          <div class="actions">
+            <button type="button" class="btn btn--quiet" id="jrExportCsv">Сохранить лог · CSV</button>
+            <button type="button" class="btn btn--quiet" id="jrExportReport">Сохранить отчёт · TXT</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="block">
+        <header class="block__head">
+          <h2><i>04</i>Работа с записью</h2>
+          <p class="block__meta">журнал сохраняется в браузере</p>
+        </header>
+        <div class="block__body">
+          <div class="actions actions--stack">
+            <button type="button" class="btn" id="jrImport">Открыть лог из файла…</button>
+            <input type="file" id="jrFile" accept=".csv,.txt,.log" hidden>
+            <button type="button" class="btn" id="jrResumeSession" hidden>Продолжить прошлый сеанс</button>
+            <button type="button" class="btn" id="jrToLive" hidden>Вернуться к эмулятору</button>
+          </div>
+          <dl class="stats" id="jrReplayMeta"></dl>
+          <div class="actions" id="jrReplayTools" hidden>
+            <button type="button" class="btn btn--quiet" id="jrReplayToggle">Пауза</button>
+            <label class="inline-field">темп
+              <select id="jrReplaySpeed">
+                <option value="0.25">×0,25</option>
+                <option value="1" selected>×1</option>
+                <option value="4">×4</option>
+                <option value="16">×16</option>
+                <option value="0">без пауз</option>
+              </select>
+            </label>
+          </div>
+          <p class="note">Файл воспроизводится тем же разбором, что и живой поток: годятся выгрузки
+            этого пульта и CSV-файлы эмулятора.</p>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════ ЭКРАН 06 · НАСТРОЙКИ ══════════════════ -->
+<section class="view" id="view-settings" role="tabpanel" aria-labelledby="tab-settings" tabindex="-1" hidden>
+  <div class="view__cols">
+
+    <div class="col col--main">
+
+      <section class="block">
+        <header class="block__head">
+          <h2><i>01</i>Подключение</h2>
+          <p class="block__meta" id="setConnMeta">—</p>
+        </header>
+        <div class="block__body">
+          <div class="form form--rows">
+            <div class="row">
+              <label for="setUrl">Адрес эмулятора</label>
+              <input type="url" id="setUrl" spellcheck="false" autocomplete="off" placeholder="http://127.0.0.1:8765/telemetry">
+              <p class="field__hint">Эмулятор телеметрии: <code>python emulator.py</code> → <code>GET /telemetry</code></p>
+            </div>
+            <div class="row">
+              <label for="setPoll">Интервал опроса, мс</label>
+              <input type="number" id="setPoll" min="40" max="1000" step="10" inputmode="numeric">
+              <p class="field__hint">Эмулятор отдаёт только последний кадр, поэтому опрос должен быть чаще интервала кадров.
+                Пульт подбирает интервал сам по измеренной полноте потока; чтобы задать вручную, измените поле и нажмите «Сохранить настройки».</p>
+            </div>
+            <div class="row">
+              <label for="setStale">Потеря связи через, с</label>
+              <input type="number" id="setStale" min="1" max="60" step="0.5" inputmode="decimal">
+              <p class="field__hint">После этой паузы показания помечаются как устаревшие.</p>
+            </div>
+            <div class="row">
+              <label for="setPre">Преамбула</label>
+              <input type="text" id="setPre" spellcheck="false" autocomplete="off">
+            </div>
+            <div class="row">
+              <label for="setPost">Постамбула</label>
+              <input type="text" id="setPost" spellcheck="false" autocomplete="off">
+            </div>
+          </div>
+          <div class="actions">
+            <button type="button" class="btn btn--primary" id="setSave">Сохранить настройки</button>
+            <button type="button" class="btn btn--quiet" id="setCheck">Проверить соединение</button>
+            <span class="check-result" id="setCheckResult" role="status"></span>
+          </div>
+        </div>
+      </section>
+
+      <section class="block">
+        <header class="block__head">
+          <h2><i>02</i>Пороги состояний</h2>
+          <p class="block__meta">напряжение батареи, В</p>
+        </header>
+        <div class="block__body">
+          <div class="form form--rows">
+            <div class="row">
+              <label for="setVwLo">Внимание ниже</label>
+              <input type="number" id="setVwLo" step="0.01" min="0" inputmode="decimal">
+            </div>
+            <div class="row">
+              <label for="setVwHi">Внимание выше</label>
+              <input type="number" id="setVwHi" step="0.01" min="0" inputmode="decimal">
+            </div>
+            <div class="row">
+              <label for="setVcLo">Авария ниже</label>
+              <input type="number" id="setVcLo" step="0.01" min="0" inputmode="decimal">
+            </div>
+            <div class="row">
+              <label for="setVcHi">Авария выше</label>
+              <input type="number" id="setVcHi" step="0.01" min="0" inputmode="decimal">
+            </div>
+          </div>
+          <p class="note">Значения по умолчанию соответствуют комплекту учебного пульта: 7,2–8,5 В — рабочий
+            диапазон, 6,6 и 8,7 В — границы аварии. Авария имеет приоритет над вниманием.</p>
+        </div>
+      </section>
+
+    </div>
+
+    <div class="col col--aside">
+
+      <section class="block">
+        <header class="block__head">
+          <h2><i>03</i>Отображение</h2>
+          <p class="block__meta">—</p>
+        </header>
+        <div class="block__body">
+          <div class="form form--rows">
+            <div class="row">
+              <label for="setTheme">Тема</label>
+              <select id="setTheme">
+                <option value="auto">как в системе</option>
+                <option value="light">светлая</option>
+                <option value="dark">тёмная</option>
+              </select>
+            </div>
+            <div class="row">
+              <label for="setThresholds">Пороги на графике питания</label>
+              <select id="setThresholds">
+                <option value="1">показывать</option>
+                <option value="0">скрыть</option>
+              </select>
+            </div>
+            <div class="row">
+              <label for="setAnimate">Мигание аварии</label>
+              <select id="setAnimate">
+                <option value="1">включено</option>
+                <option value="0">выключено</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="block">
+        <header class="block__head">
+          <h2><i>04</i>Данные</h2>
+          <p class="block__meta">—</p>
+        </header>
+        <div class="block__body">
+          <div class="actions actions--stack">
+            <button type="button" class="btn" id="setExport">Выгрузить настройки · JSON</button>
+            <button type="button" class="btn" id="setImport">Загрузить настройки…</button>
+            <input type="file" id="setFile" accept="application/json,.json" hidden>
+            <button type="button" class="btn" id="setReset">Вернуть значения по умолчанию</button>
+            <button type="button" class="btn btn--danger" id="setPurge">Стереть журнал и сеанс</button>
+          </div>
+          <p class="note">Журнал пакетов, настройки и прошлая сессия хранятся в браузере (localStorage).
+            Данные никуда не отправляются.</p>
+        </div>
+      </section>
+
+      <section class="block">
+        <header class="block__head">
+          <h2><i>05</i>О пульте</h2>
+          <p class="block__meta">сборка</p>
+        </header>
+        <div class="block__body">
+          <dl class="stats" id="setInfo"></dl>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer class="colophon">
+  <p>Хакатон-ЦУП · сезон 2026 · пульт оператора учебного спутника «ИнтроСат»</p>
+  <p>Источник данных: <a href="https://github.com/mcc-hack/data-emulator" target="_blank" rel="noreferrer noopener">mcc-hack/data-emulator</a> · протокол пакета: <code id="footProto">18 полей, разделитель «;»</code></p>
+</footer>
+
+<!-- ══ СПРАВКА ══ -->
+<dialog class="sheet" id="helpSheet" aria-labelledby="helpTitle">
+  <form method="dialog" class="sheet__head">
+    <h2 id="helpTitle">Справка оператора</h2>
+    <button class="btn btn--quiet" value="close" aria-label="Закрыть">Закрыть</button>
+  </form>
+  <div class="sheet__body">
+    <section class="block block--flush">
+      <header class="block__head"><h2><i>01</i>Первый запуск</h2></header>
+      <div class="block__body">
+        <ol class="steps">
+          <li>Установите Python 3.10+ и запустите эмулятор в его папке: <code>python emulator.py</code></li>
+          <li>Выберите файл телеметрии (для проверки — <code>01_normal_flight.csv</code>)</li>
+          <li>В окне появится адрес <code>http://127.0.0.1:8765/telemetry</code> — пульт подхватит его сам</li>
+        </ol>
+      </div>
+    </section>
+    <section class="block block--flush">
+      <header class="block__head"><h2><i>02</i>Горячие клавиши</h2></header>
+      <div class="block__body">
+        <ul class="keys">
+          <li><kbd>1</kbd>…<kbd>6</kbd><span>переключение экранов</span></li>
+          <li><kbd>P</kbd><span>заморозить / возобновить приём</span></li>
+          <li><kbd>G</kbd><span>следующая группа графика</span></li>
+          <li><kbd>L</kbd><span>показать или скрыть легенду графика</span></li>
+          <li><kbd>?</kbd><span>эта справка</span></li>
+          <li><kbd>Esc</kbd><span>закрыть окно</span></li>
+        </ul>
+      </div>
+    </section>
+    <section class="block block--flush">
+      <header class="block__head"><h2><i>03</i>Цвета состояний</h2></header>
+      <div class="block__body">
+        <ul class="legend legend--states">
+          <li><i class="swatch swatch--ok"></i>норма — показания в допуске</li>
+          <li><i class="swatch swatch--warn"></i>внимание — данные есть, но требуют проверки</li>
+          <li><i class="swatch swatch--bad"></i>авария — модуль недоступен или параметр вне допуска</li>
+        </ul>
+      </div>
+    </section>
+  </div>
+</dialog>
+
+<script>
+/* js/telemetry.js */
+/* =============================================================================
+   telemetry.js — протокол телеметрии.
+   Единственный модуль, который знает про формат пакета. Остальные работают
+   только с уже разобранными значениями.
+   Формат пакета (18 полей, разделитель «;») — по документации эмулятора
+   mcc-hack/data-emulator:
+     ПРЕАМБУЛА;ВРЕМЯ ОТ ЗАПУСКА МК;АКБ;СД1;СД2;СД3;СД4;
+     AX;AY;AZ;GX;GY;GZ;MX;MY;MZ;МАХОВИК;ПОСТАМБУЛА
+   Преамбула и постамбула — маркеры кадра (AA55 / 0D0A), они же служат
+   простейшей проверкой целостности: в файле с радиопомехами они повреждаются
+   первыми.
+   Порядок объявления полей (индекс = позиция в пакете минус один):
+     0  ВРЕМЯ  1  АКБ  2…5  СД1…СД4  6…8  AX…AZ
+     9…11 GX…GZ  12…14 MX…MZ  15  МАХОВИК
+   ========================================================================== */
+'use strict';
+window.CU = window.CU || {};
+CU.Telemetry = (function () {
+  /* ── Описание полей ──────────────────────────────────────────────────────
+     kind:    'time' | 'raw' | 'scaled'
+     div:     делитель для перевода в физические единицы
+     range:   допустимый диапазон «сырого» значения (нарушение = повреждение)
+     sat:     с какого значения считать насыщением измерителя
+     sensor:  true, если поле относится к датчику (для группировки в модули)
+  -------------------------------------------------------------------------*/
+  const FIELDS = [
+    { key: 'mk',     label: 'ВРЕМЯ ОТ ЗАПУСКА МК', short: 'Время',  unit: 'с',        kind: 'time',   div: 1,      range: [0, 2147483647], sensor: false },
+    { key: 'akb',    label: 'АКБ',                  short: 'АКБ',    unit: 'В',        kind: 'scaled', div: 1000,   range: [0, 65535], sensor: false, plausible: [2000, 20000] },
+    { key: 'sd1',    label: 'СД1',                  short: 'СД1',    unit: 'ед.',      kind: 'raw',    div: 1,      range: [0, 65536], sat: 65530, sensor: true },
+    { key: 'sd2',    label: 'СД2',                  short: 'СД2',    unit: 'ед.',      kind: 'raw',    div: 1,      range: [0, 65536], sat: 65530, sensor: true },
+    { key: 'sd3',    label: 'СД3',                  short: 'СД3',    unit: 'ед.',      kind: 'raw',    div: 1,      range: [0, 65536], sat: 65530, sensor: true },
+    { key: 'sd4',    label: 'СД4',                  short: 'СД4',    unit: 'ед.',      kind: 'raw',    div: 1,      range: [0, 65536], sat: 65530, sensor: true },
+    { key: 'ax',     label: 'AX',                   short: 'AX',     unit: 'g',        kind: 'scaled', div: 16384,  range: [-32768, 32767], sat: 32700, sensor: true },
+    { key: 'ay',     label: 'AY',                   short: 'AY',     unit: 'g',        kind: 'scaled', div: 16384,  range: [-32768, 32767], sat: 32700, sensor: true },
+    { key: 'az',     label: 'AZ',                   short: 'AZ',     unit: 'g',        kind: 'scaled', div: 16384,  range: [-32768, 32767], sat: 32700, sensor: true },
+    { key: 'gx',     label: 'GX',                   short: 'GX',     unit: '°/с',      kind: 'scaled', div: 131.072, range: [-32768, 32767], sat: 32700, sensor: true },
+    { key: 'gy',     label: 'GY',                   short: 'GY',     unit: '°/с',      kind: 'scaled', div: 131.072, range: [-32768, 32767], sat: 32700, sensor: true },
+    { key: 'gz',     label: 'GZ',                   short: 'GZ',     unit: '°/с',      kind: 'scaled', div: 131.072, range: [-32768, 32767], sat: 32700, sensor: true },
+    { key: 'mx',     label: 'MX',                   short: 'MX',     unit: 'Гс',       kind: 'scaled', div: 1711.6, range: [-32768, 32767], sat: 32700, sensor: true },
+    { key: 'my',     label: 'MY',                   short: 'MY',     unit: 'Гс',       kind: 'scaled', div: 1711.6, range: [-32768, 32767], sat: 32700, sensor: true },
+    { key: 'mz',     label: 'MZ',                   short: 'MZ',     unit: 'Гс',       kind: 'scaled', div: 1711.6, range: [-32768, 32767], sat: 32700, sensor: true },
+    { key: 'wheel',  label: 'МАХОВИК',              short: 'Маховик', unit: 'ед.',     kind: 'raw',    div: 1,      range: [-32768, 32767], sat: 32700, sensor: true },
+  ];
+  /* Смещения полей внутри пакета (0 — преамбула, 17 — постамбула) */
+  const PACKET_SIZE = FIELDS.length + 2;
+  const PRE = 0, POST = PACKET_SIZE - 1;
+  /* Индексы для удобства доступа */
+  const IDX = FIELDS.reduce((map, field, i) => (map[field.key] = i, map), {});
+  /* Группы датчиков — по ним собираются модули и легенды графиков */
+  const TRIPLES = [
+    { keys: ['ax', 'ay', 'az'], module: 'imu',  title: 'Акселерометр', unit: 'g',   digits: 3 },
+    { keys: ['gx', 'gy', 'gz'], module: 'imu',  title: 'Гироскоп',     unit: '°/с', digits: 2 },
+    { keys: ['mx', 'my', 'mz'], module: 'imu',  title: 'Магнитометр',  unit: 'Гс',  digits: 2 },
+  ];
+  const LUM = ['sd1', 'sd2', 'sd3', 'sd4'];
+  /* Группы для переключателя графика. Цвет и штриховка заданы здесь же,
+     чтобы легенда и линия на графике всегда совпадали.                     */
+  const CHART_GROUPS = [
+    { key: 'pwr',   name: 'Батарея', unit: 'В',   digits: 2, series: [{ key: 'akb', label: 'АКБ', color: 0 }] },
+    { key: 'wheel', name: 'Маховик', unit: 'ед.', digits: 0, series: [{ key: 'wheel', label: 'Скорость', color: 0 }] },
+    { key: 'lum',   name: 'Освещённость', unit: 'ед.', digits: 0,
+      series: LUM.map((key, i) => ({ key, label: FIELDS[IDX[key]].short, color: i })) },
+    { key: 'acc',   name: 'Акселерометр', unit: 'g',  digits: 3,
+      series: ['ax', 'ay', 'az'].map((key, i) => ({ key, label: key.toUpperCase(), color: i })) },
+    { key: 'gyr',   name: 'Гироскоп', unit: '°/с', digits: 2,
+      series: ['gx', 'gy', 'gz'].map((key, i) => ({ key, label: key.toUpperCase(), color: i, dash: i === 2 })) },
+    { key: 'mag',   name: 'Магнитометр', unit: 'Гс', digits: 2,
+      series: ['mx', 'my', 'mz'].map((key, i) => ({ key, label: key.toUpperCase(), color: i })) },
+  ];
+  /* Признак состояния поля */
+  const OK = 'ok', OFF = 'off', BAD = 'bad', SAT = 'sat';
+  const STATE_TEXT = {
+    ok:  ['Достоверно', 0],
+    off: ['Датчик отключён (OFF)', 1],
+    sat: ['Насыщение измерителя', 1],
+    bad: ['Значение повреждено', 2],
+  };
+  /**
+   * Разбирает одну строку телеметрии.
+   *
+   * @param {string} raw   строка пакета как есть
+   * @param {object} cfg   настройки: pre, post, chaosLimit
+   * @returns {object} результат разбора (см. описание в app.js → ingest)
+   */
+  function parse(raw, cfg) {
+    const parts = raw.trim().split(';').map(part => part.trim());
+    const result = blank(raw);
+    const reject = (key, text) => { result.level = 2; result.reasonKey = key; result.reason = text; return result; };
+    if (parts.length !== PACKET_SIZE) {
+      return reject('fields', 'Неверное число полей: ' + parts.length + ' вместо ' + PACKET_SIZE);
+    }
+    if (parts[PRE] !== cfg.pre) {
+      return reject('preamble', 'Преамбула «' + parts[PRE] + '» вместо «' + cfg.pre + '»');
+    }
+    if (parts[POST] !== cfg.post) {
+      return reject('postamble', 'Постамбула «' + parts[POST] + '» вместо «' + cfg.post + '»');
+    }
+    let invalid = 0;
+    for (let i = 0; i < FIELDS.length; i++) {
+      const def = FIELDS[i];
+      const token = parts[i + 1];
+      const slot = result.fields[i];
+      /* Метка OFF в эмуляторе означает физически отключённый датчик.
+         Это не повреждение пакета, поэтому пакет остаётся пригодным,
+         а состояние датчика переходит в «нет связи».                     */
+      if (token === 'OFF') {
+        slot.state = OFF;
+        invalid++;
+        continue;
+      }
+      if (!/^-?\d+$/.test(token)) {
+        slot.state = BAD;
+        slot.token = token;
+        invalid++;
+        continue;
+      }
+      const value = parseInt(token, 10);
+      slot.token = token;
+      if (value < def.range[0] || value > def.range[1]) {
+        slot.state = BAD;
+        slot.token = token;
+        invalid++;
+        continue;
+      }
+      /* АКБ — единственное поле с проверкой правдоподобия: протокол
+         допускает 0…65535 мВ, но такой диапазон питания невозможен.      */
+      if (def.plausible && (value < def.plausible[0] || value > def.plausible[1])) {
+        slot.state = BAD;
+        invalid++;
+        continue;
+      }
+      slot.state = (def.sat !== undefined && Math.abs(value) >= def.sat) ? SAT : OK;
+      slot.value = value / def.div;
+    }
+    /* Время пакета — служебное поле: без него пакет нельзя положить
+       на временную шкалу, поэтому он не подлежит «мягкой» обработке.     */
+    if (result.fields[IDX.mk].state !== OK) {
+      return reject('time', 'Повреждено время пакета: «' + (result.fields[IDX.mk].token || '—') + '»');
+    }
+    result.mk = result.fields[IDX.mk].value;
+    /* Больше трёх повреждённых полей — пакет не имеет физического смысла. */
+    if (invalid > cfg.chaosLimit) {
+      return reject('chaos', 'Хаотичный пакет: недостоверных полей ' + invalid);
+    }
+    if (invalid > 0) {
+      result.level = 1;
+      const off = result.fields.filter(slot => slot.state === OFF).length;
+      result.reasonKey = off === invalid ? 'off' : off ? 'off-fields' : 'fields';
+      result.reason = describe(result);
+    }
+    return result;
+  }
+  /* Пустой результат разбора: структура зафиксирована, чтобы потребителям
+     не приходилось проверять наличие полей.                               */
+  function blank(raw) {
+    return {
+      raw,
+      level: 0,
+      reason: null,
+      reasonKey: null,
+      mk: null,
+      fields: FIELDS.map(def => ({
+        def, token: '', value: null, state: BAD, physical: null,
+      })),
+      groups: { a: null, g: null, m: null, lum: null, akb: null, wheel: null },
+    };
+  }
+  /* Собирает производные величины (модули акселерометра и т. п.).
+     Группа целиком помечается недоступной, если хотя бы одно поле
+     её не достоверно: частичные векторы вводили бы в заблуждение.      */
+  function derive(frame) {
+    const read = key => {
+      const slot = frame.fields[IDX[key]];
+      return slot.state === OK || slot.state === SAT ? slot.value : null;
+    };
+    const readAll = keys => {
+      const out = keys.map(read);
+      return out.some(value => value === null) ? null : out;
+    };
+    frame.groups.akb   = read('akb');
+    frame.groups.wheel = read('wheel');
+    frame.groups.lum   = LUM.map(read);
+    frame.groups.a     = readAll(['ax', 'ay', 'az']);
+    frame.groups.g     = readAll(['gx', 'gy', 'gz']);
+    frame.groups.m     = readAll(['mx', 'my', 'mz']);
+    for (const field of frame.fields) {
+      field.physical = field.value;
+    }
+    return frame;
+  }
+  /* Текст перечня проблемных полей — попадает в журнал и в тревогу.
+     Метка OFF и повреждённое значение — разные вещи, поэтому в тексте
+     они не смешиваются: отключение датчика и сбой канала оцениваются
+     оператором по-разному.                                              */
+  function describe(frame) {
+    const names = state => frame.fields
+      .map((slot, i) => ({ slot, i }))
+      .filter(item => item.slot.state === state)
+      .map(item => FIELDS[item.i].short);
+    const off = names(OFF);
+    const bad = names(BAD);
+    const parts = [];
+    if (off.length) parts.push('отключены датчики: ' + off.join(', '));
+    if (bad.length) parts.push('повреждены значения: ' + bad.join(', '));
+    return parts.join('; ');
+  }
+  /* Список отклонённых пакетов с причиной — для CSV-выгрузки. */
+  function defectsOf(frame) {
+    return frame.fields
+      .map((slot, i) => ({ slot, i }))
+      .filter(item => item.slot.state === BAD)
+      .map(item => FIELDS[item.i].short + '="' + (item.slot.token || '') + '"');
+  }
+  /* Значение поля по ключу: физическая величина или null. */
+  function value(frame, key) {
+    if (!frame) return null;
+    const slot = frame.fields[IDX[key]];
+    return slot && (slot.state === OK || slot.state === SAT) ? slot.value : null;
+  }
+  /* Состояния полей одним массивом — рисуется карта целостности. */
+  function states(frame) {
+    return frame ? frame.fields.map(slot => slot.state) : null;
+  }
+  /* Строка заголовка для выгрузки лога в формате эмулятора. */
+  function headerLine() {
+    return ['ПРЕАМБУЛА', 'ВРЕМЯ ОТ ЗАПУСКА МК'].concat(FIELDS.slice(1).map(f => f.label), 'ПОСТАМБУЛА').join(';');
+  }
+  return {
+    FIELDS, IDX, PACKET_SIZE, CHART_GROUPS, LUM, TRIPLES,
+    OK, OFF, BAD, SAT, STATE_TEXT,
+    parse, derive, describe, defectsOf, value, states, headerLine,
+  };
+})();
+</script>
+<script>
+/* js/analysis.js */
+/* =============================================================================
+   analysis.js — оценка состояния аппарата и статистика потока.
+   Здесь нет ни DOM, ни сети: на вход разобранный пакет (CU.Telemetry),
+   на выходе — состояния модулей, числа для приборной группы, карта
+   достоверности полей и текст отчёта.
+   ========================================================================== */
+'use strict';
+window.CU = window.CU || {};
+CU.Analysis = (function () {
+  const T = CU.Telemetry;
+  /* ── Состояния модулей ─────────────────────────────────────────────────
+     Уровень: 0 — норма, 1 — внимание, 2 — авария.
+     Правило: потеря связи с датчиком (OFF) — авария, повреждение
+     отдельного значения — внимание, выход параметра за допуск — по
+     настроенным порогам.                                                */
+  const MODULES = [
+    { id: 'mcu',   name: 'Микроконтроллер STM32', role: 'Основной вычислительный модуль' },
+    { id: 'imu',   name: 'Датчик положения',       role: 'Гироскоп, акселерометр, магнитометр' },
+    { id: 'lum',   name: 'Датчики освещённости',   role: 'Четыре канала СД1—СД4' },
+    { id: 'power', name: 'Модуль питания',         role: 'Аккумуляторная батарея' },
+    { id: 'wheel', name: 'Плата маховика',         role: 'Система ориентации' },
+  ];
+  /* Раскладывает поля группы по признакам: отключён / повреждён /
+     насыщен / нулевой.                                                 */
+  function inspect(frame, keys, options) {
+    const out = { off: [], bad: [], sat: [], zero: [] };
+    for (const key of keys) {
+      const slot = frame.fields[T.IDX[key]];
+      const label = slot.def.short;
+      if (slot.state === T.OFF) out.off.push(label);
+      else if (slot.state === T.BAD) out.bad.push(label);
+      else if (slot.state === T.SAT) out.sat.push(label);
+      else if (options && options.checkZero && slot.value === 0) out.zero.push(label);
+    }
+    return out;
+  }
+  /* Общая оценка группы: OFF важнее повреждения, повреждение важнее нулей. */
+  function grade(info) {
+    if (info.off.length) return { level: 2, why: 'Нет связи: ' + info.off.join(', ') };
+    if (info.bad.length) return { level: 1, why: 'Повреждены значения: ' + info.bad.join(', ') };
+    if (info.sat.length) return { level: 1, why: 'Насыщение измерителя: ' + info.sat.join(', ') };
+    if (info.zero.length) return { level: 1, why: 'Нулевые показания: ' + info.zero.join(', ') };
+    return { level: 0, why: 'Данные поступают' };
+  }
+  const fmt = (value, digits) => value === null || value === undefined
+    ? '—' : value.toFixed(digits);
+  const magnitude = (vector, digits, unit) =>
+    vector === null ? '—' : Math.hypot.apply(null, vector).toFixed(digits) + ' ' + unit;
+  /* ── Оценка всех модулей ────────────────────────────────────────────────
+     @param frame  разобранный пакет
+     @param ctx    { cfg, stale, rebooted }
+  -------------------------------------------------------------------------*/
+  function modules(frame, ctx) {
+    const cfg = ctx.cfg;
+    if (!frame) {
+      return MODULES.map(module => Object.assign({}, module, {
+        level: 2,
+        reading: '—',
+        why: ctx.stale ? 'Передача данных прекращена' : 'Ожидание первого пакета',
+      }));
+    }
+    const out = [];
+    /* Микроконтроллер: время отсчитывается с включения, обнуление
+       счётчика означает перезапуск — это не поломка, но оператор
+       должен знать, что отсчёт начат заново.                            */
+    const rebooted = ctx.rebooted;
+    out.push(Object.assign({}, MODULES[0], {
+      level: rebooted ? 1 : 0,
+      reading: 'Время МК ' + frame.mk + ' с',
+      why: rebooted ? 'Счётчик времени перезапущен' : 'Работает штатно',
+    }));
+    /* Датчик положения: три датчика оцениваются раздельно, общий статус —
+     худший из них. Нулевой акселерометр и магнитометр трактуются как
+     отказ: на орбите вектор «свободного падения» не бывает нулевым.  */
+    const triples = [
+      { keys: ['ax', 'ay', 'az'], title: 'акселерометр', digits: 3, unit: 'g',   checkZero: true },
+      { keys: ['gx', 'gy', 'gz'], title: 'гироскоп',     digits: 2, unit: '°/с', checkZero: false },
+      { keys: ['mx', 'my', 'mz'], title: 'магнитометр',  digits: 2, unit: 'Гс',  checkZero: true },
+    ];
+    const imuInfos = triples.map(triple => ({
+      title: triple.title,
+      info: inspect(frame, triple.keys, { checkZero: triple.checkZero }),
+    }));
+    const imuWorst = imuInfos.reduce((worst, item) => Math.max(worst, grade(item.info).level), 0);
+    const imuReasons = imuInfos
+      .map(item => Object.assign({ title: item.title }, grade(item.info)))
+      .filter(item => item.level > 0)
+      .map(item => item.title + ' — ' + item.why);
+    out.push(Object.assign({}, MODULES[1], {
+      level: imuWorst,
+      reading: [
+        '|a| ' + magnitude(frame.groups.a, 2, 'g'),
+        '|ω| ' + magnitude(frame.groups.g, 1, '°/с'),
+        '|B| ' + magnitude(frame.groups.m, 2, 'Гс'),
+      ].join(' · '),
+      why: imuReasons.length ? imuReasons.join('; ') : 'Все три датчика в работе',
+    }));
+    /* Освещённость: четыре независимых канала */
+    const lumInfo = inspect(frame, T.LUM, { checkZero: true });
+    out.push(Object.assign({}, MODULES[2], {
+      level: grade(lumInfo).level,
+      reading: T.LUM
+        .map((key, i) => T.FIELDS[T.IDX[key]].short + ' ' + (frame.groups.lum[i] === null ? '—' : frame.groups.lum[i]))
+        .join(' · '),
+      why: grade(lumInfo).why,
+    }));
+    /* Питание: единственный параметр, для которого пороги настраивает оператор */
+    const akbSlot = frame.fields[T.IDX.akb];
+    let powerLevel = 0, powerWhy = 'Напряжение в допуске', powerReading = '—';
+    if (akbSlot.state === T.OFF) {
+      powerLevel = 2; powerWhy = 'Модуль отключён (OFF)';
+    } else if (akbSlot.value === null) {
+      powerLevel = 2; powerWhy = 'Данные модуля отсутствуют';
+    } else {
+      const volts = frame.groups.akb;
+      powerReading = fmt(volts, 2) + ' В';
+      if (volts < cfg.vcLo) { powerLevel = 2; powerWhy = 'Критически низкое напряжение'; }
+      else if (volts > cfg.vcHi) { powerLevel = 2; powerWhy = 'Напряжение выше допустимого'; }
+      else if (volts < cfg.vwLo) { powerLevel = 1; powerWhy = 'Напряжение снижено'; }
+      else if (volts > cfg.vwHi) { powerLevel = 1; powerWhy = 'Напряжение повышено'; }
+    }
+    out.push(Object.assign({}, MODULES[3], { level: powerLevel, reading: powerReading, why: powerWhy }));
+    /* Маховик: знак скорости задаёт направление вращения */
+    const wheelSlot = frame.fields[T.IDX.wheel];
+    let wheelLevel = 0, wheelWhy = 'Готов к работе';
+    if (wheelSlot.state === T.OFF) { wheelLevel = 2; wheelWhy = 'Плата отключена (OFF)'; }
+    else if (wheelSlot.value === null) { wheelLevel = 1; wheelWhy = 'Значение повреждено'; }
+    else if (wheelSlot.state === T.SAT) { wheelLevel = 1; wheelWhy = 'Предел скорости'; }
+    else if (wheelSlot.value === 0) { wheelWhy = 'Маховик остановлен'; }
+    else { wheelWhy = wheelSlot.value > 0 ? 'Вращение в положительном направлении' : 'Вращение в отрицательном направлении'; }
+    out.push(Object.assign({}, MODULES[4], {
+      level: wheelLevel,
+      reading: wheelSlot.value === null ? '—' : 'Скорость ' + wheelSlot.value,
+      why: wheelWhy,
+    }));
+    /* Просроченные показания: данные есть, но они старше допустимого
+       интервала. Показывать их как актуальные нельзя.                    */
+    if (ctx.stale) {
+      return out.map(module => Object.assign({}, module, {
+        level: 2,
+        why: 'Показания устарели: нет новых пакетов',
+      }));
+    }
+    return out;
+  }
+  /* ── Ориентация ─────────────────────────────────────────────────────────
+     Крен и тангаж берутся из акселерометра (он «видит» направление вниз),
+     курс — из магнитометра (видит магнитный север). Это классическая
+     триадизация без гироскопа: точность зависит от модуля длины
+     ускорений, поэтому оценка помечена как приближённая.              */
+  function attitude(frame) {
+    const a = frame && frame.groups.a;
+    const m = frame && frame.groups.m;
+    const accValid = Array.isArray(a) && Math.hypot.apply(null, a) > 0.05;
+    const magValid = Array.isArray(m) && Math.hypot.apply(null, m) > 0.2;
+    return {
+      roll:  accValid ? Math.atan2(a[1], a[2]) : null,
+      pitch: accValid ? Math.atan2(-a[0], Math.hypot(a[1], a[2])) : null,
+      yaw:   magValid ? wrap2pi(Math.atan2(m[1], m[0])) : null,
+      accValid, magValid,
+    };
+  }
+  const RAD = 180 / Math.PI;
+  const wrap2pi = angle => ((angle % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
+  const degrees = radians => radians === null ? '—' : (radians * RAD).toFixed(1) + '°';
+  /* ── Поток: счётчики сеанса и карта достоверности ─────────────────────
+     Эмулятор отдаёт только последний кадр, поэтому между двумя
+     полученными пакетами счётчик МК может увеличиться на несколько.
+     Разница — это честная оценка потерянных пакетов.
+     История ограничена сверху: при 10 кадрах в секунду 20 000 кадров —
+     это около 33 минут, с запасом перекрывающие самое длинное окно
+     графика (15 минут). Без ограничения сеанс длиной в несколько часов
+     съедал бы сотни мегабайт: измеренная цена одного кадра — 1111 байт,
+     то есть 38 МБ в час. Счётчики при этом остаются накопительными.   */
+  const MATRIX_WIDTH = 64;
+  const MAX_FRAMES = 20000;
+  const MAX_LOG = 5000;
+  class Stream {
+    constructor() { this.reset(); }
+    reset() {
+      this.startedAt = Date.now();
+      this.frames = [];          // принятые пакеты (для журнала и графиков)
+      this.log = [];             // все пакеты: принятые и отклонённые
+      this.accepted = 0;
+      this.rejected = 0;
+      this.defective = 0;   // принято, но с недостоверными полями
+      this.lost = 0;
+      this.duplicates = 0;
+      this.lastMk = null;
+      this.steps = [];          // последние шаги счётчика МК
+      this.matrix = [];          // кольцевой буфер состояний полей
+      this.defects = new Map();  // reasonKey → { count, sample }
+      this.fieldIssues = new Map();
+      this.lastFrameAt = 0;
+      this.arrivals = [];
+      this.reasonOrder = ['preamble', 'postamble', 'fields', 'time', 'chaos', 'fields-bad', 'gap', 'rollback', 'off', 'sat'];
+    }
+    /* Регистрирует один пакет. Возвращает объект с признаком пригодности
+       и предупреждениями о последовательности (пропуск, откат счётчика). */
+    record(frame, stamp) {
+      const notes = [];
+      const time = stamp || Date.now();
+      if (frame.level === 2) {
+        this.rejected++;
+        this.log.push({ at: time, mk: frame.mk, raw: frame.raw, level: 2, reason: frame.reason, key: frame.reasonKey });
+        if (this.log.length > MAX_LOG) this.log.shift();
+        this.bump(frame.reasonKey, frame.reason);
+        this.countFields(frame);
+        return { accepted: false, notes };
+      }
+      /* Последовательность счётчика МК */
+      if (this.lastMk !== null) {
+        const step = frame.mk - this.lastMk;
+        if (step > 1) {
+          this.lost += step - 1;
+          notes.push({ level: 1, key: 'gap', text: 'Пропущено пакетов по счётчику МК: ' + (step - 1) });
+          this.bump('gap', 'Пропуск по счётчику МК');
+        } else if (step <= 0) {
+          notes.push({ level: 1, key: 'rollback', text: 'Счётчик МК ушёл назад на ' + Math.abs(step) + ' с' });
+          this.bump('rollback', 'Откат времени МК');
+        }
+        /* Шаг хранится по кругу: по нему считается скользящая полнота,
+           на которую реагирует регулятор частоты опроса.            */
+        this.steps.push(Math.max(1, step));
+        if (this.steps.length > 200) this.steps.shift();
+        if (step === 0) this.duplicates++;
+      }
+      this.lastMk = frame.mk;
+      if (frame.level === 1) {
+        this.defective++;
+        this.bump(frame.reasonKey === 'fields' ? 'fields-bad' : frame.reasonKey, frame.reason);
+        notes.push({ level: 1, key: frame.reasonKey, text: frame.reason });
+      }
+      this.countFields(frame);
+      this.accepted++;
+      frame.at = time;                       // метка времени для окон графиков
+      this.frames.push(frame);
+      if (this.frames.length > MAX_FRAMES) this.frames.shift();
+      this.matrix.push(frame.fields.map(slot => slot.state));
+      if (this.matrix.length > MATRIX_WIDTH) this.matrix.shift();
+      this.arrivals.push(time);
+      if (this.arrivals.length > 600) this.arrivals.shift();
+      this.lastFrameAt = time;
+      this.log.push({ at: time, mk: frame.mk, raw: frame.raw, level: frame.level, reason: frame.reason, key: frame.reasonKey });
+      if (this.log.length > MAX_LOG) this.log.shift();
+      return { accepted: true, notes };
+    }
+    bump(key, sample) {
+      const item = this.defects.get(key) || { count: 0, sample: sample || '' };
+      item.count++;
+      this.defects.set(key, item);
+    }
+    /* Счётчики по каждому полю: сколько раз оно было повреждено,
+       отключено или насыщено. Показываются в карте целостности. */
+    countFields(frame) {
+      frame.fields.forEach((slot, i) => {
+        if (slot.state === T.OK) return;
+        const item = this.fieldIssues.get(i) || { off: 0, bad: 0, sat: 0, total: 0 };
+        item[slot.state]++;
+        item.total++;
+        this.fieldIssues.set(i, item);
+      });
+    }
+    /* Кадры не старше указанного момента. История упорядочена по времени
+       прихода, поэтому граница ищется делением пополам: перебор всех
+       кадров на каждой перерисовке стоил бы сотни тысяч операций в
+       секунду к концу длинного сеанса.                                   */
+    framesSince(moment) {
+      const frames = this.frames;
+      let low = 0, high = frames.length;
+      while (low < high) {
+        const middle = (low + high) >> 1;
+        if (frames[middle].at < moment) low = middle + 1;
+        else high = middle;
+      }
+      return low === frames.length ? [] : frames.slice(low);
+    }
+    /* Сколько секунд прошло с последнего принятого пакета. */
+    idleSeconds(now) {
+      return this.lastFrameAt ? (now - this.lastFrameAt) / 1000 : Infinity;
+    }
+    /* Частота обновления по фактическим интервалам между пакетами. */
+    rateHz() {
+      if (this.arrivals.length < 2) return 0;
+      const from = this.arrivals[this.arrivals.length - 1] - 5000;
+      const inWindow = this.arrivals.filter(at => at >= from).length;
+      const span = Math.min(5, (Date.now() - this.arrivals[0]) / 1000) || 1;
+      return inWindow / Math.max(1, Math.min(span, 5));
+    }
+    expected() { return this.accepted + this.lost; }
+    /* Полнота за сеанс — для отчёта: там важна и одна грубая потеря. */
+    /* Полнота за последние шаги — для регулятора опроса: одна вспышка
+       потерь не должна навсегда ухудшать работу приёмника.          */
+    completeness(window) {
+      if (!window) {
+        const expected = this.expected();
+        return expected ? (this.accepted / expected) * 100 : null;
+      }
+      const steps = this.steps.slice(-window);
+      if (steps.length < 10) return null;
+      const expected = steps.reduce((sum, step) => sum + step, 0);
+      const lost = steps.reduce((sum, step) => sum + (step - 1), 0);
+      return expected ? ((expected - lost) / expected) * 100 : null;
+    }
+    /* Сводка для приборной группы и отчёта. */
+    summary() {
+      const expected = this.expected();
+      const uptime = (Date.now() - this.startedAt) / 1000;
+      const good = this.accepted - this.rejected;
+      return {
+        uptime,
+        accepted: this.accepted,
+        rejected: this.rejected,
+        defective: this.defective,
+        lost: this.lost,
+        duplicates: this.duplicates,
+        rate: this.rateHz(),
+        completeness: this.completeness(),
+        recentCompleteness: this.completeness(120),
+        errorRate: this.accepted + this.rejected ? (this.rejected / (this.accepted + this.rejected)) * 100 : 0,
+      };
+    }
+    /* Причины отклонений, отсортированные по частоте. */
+    defectList() {
+      return Array.from(this.defects.entries())
+        .map(([key, item]) => ({ key, count: item.count, sample: item.sample }))
+        .sort((a, b) => b.count - a.count);
+    }
+    fieldIssue(i) {
+      return this.fieldIssues.get(i) || { off: 0, bad: 0, sat: 0, total: 0 };
+    }
+  }
+  /* ── Отчёт о сеансе ─────────────────────────────────────────────────────
+     Текстовый файл, который удобно приложить к заявке: достаточно
+     показать его при защите.                                              */
+  function report(stream, context) {
+    const s = stream.summary();
+    const pad = (text, width) => String(text).padEnd(width, ' ');
+    const lines = [];
+    lines.push('ОТЧЁТ О СЕАНСЕ СВЯЗИ С УЧЕБНЫМ СПУТНИКОМ «ИНТРОСАТ»');
+    lines.push('Пульт оператора ЦУП · Хакатон-ЦУП 2026');
+    lines.push('Сформирован: ' + new Date(context.now).toLocaleString('ru-RU'));
+    lines.push('Источник:    ' + context.source);
+    lines.push('');
+    lines.push('СЕАНС');
+    lines.push('  длительность, с .................. ' + s.uptime.toFixed(1));
+    lines.push('  принято пакетов .................. ' + s.accepted);
+    lines.push('  отклонено пакетов ................ ' + s.rejected);
+    lines.push('  пропущено по счётчику МК ......... ' + s.lost);
+    lines.push('  повторов пакетов ................. ' + s.duplicates);
+    lines.push('  частота обновления, Гц ........... ' + s.rate.toFixed(2));
+    lines.push('  полнота потока, % ................ ' + (s.completeness === null ? '—' : s.completeness.toFixed(2)));
+    lines.push('  доля отклонённых, % .............. ' + s.errorRate.toFixed(2));
+    lines.push('  задержка опроса, мс ............. ' + context.latency.toFixed(0));
+    lines.push('  ошибок опроса .................... ' + context.pollErrors);
+    lines.push('');
+    lines.push('СОСТОЯНИЕ МОДУЛЕЙ НА КОНЕЦ СЕАНСА');
+    for (const module of context.modules) {
+      lines.push('  ' + pad(module.name, 26) + pad(['норма', 'внимание', 'авария'][module.level], 10) + module.why);
+    }
+    if (context.frame) {
+      lines.push('');
+      lines.push('ПОСЛЕДНИЙ ПРИНЯТЫЙ ПАКЕТ');
+      lines.push('  время МК, с ...................... ' + context.frame.mk);
+      lines.push('  напряжение батареи, В ............ ' + fmt(context.frame.groups.akb, 2));
+      lines.push('  скорость маховика ................ ' + (context.frame.groups.wheel === null ? '—' : context.frame.groups.wheel));
+      lines.push('  СД1…СД4 ......................... ' + context.frame.groups.lum.map(v => v === null ? '—' : v).join(' · '));
+    }
+    const defects = stream.defectList();
+    if (defects.length) {
+      lines.push('');
+      lines.push('ПРИЧИНЫ ОТКЛОНЕНИЙ');
+      for (const item of defects) lines.push('  ' + pad(item.count, 8) + item.sample);
+    }
+    lines.push('');
+    lines.push('СОБЫТИЯ');
+    for (const event of context.events.slice(0, 60)) {
+      lines.push('  ' + pad(event.t, 10) + pad(['норма  ', 'внимание', 'авария '][event.l], 10) + event.msg);
+    }
+    lines.push('');
+    lines.push('Настройки разбора пакета: преамбула ' + context.cfg.pre +
+               ', постамбула ' + context.cfg.post +
+               ', пороги напряжения ' + context.cfg.vcLo + '…' + context.cfg.vwLo +
+               ' / ' + context.cfg.vwHi + '…' + context.cfg.vcHi + ' В');
+    return lines.join('\r\n');
+  }
+  return { MODULES, modules, attitude, degrees, Stream, report, fmt };
+})();
+</script>
+<script>
+/* js/views.js */
+/* =============================================================================
+   views.js — отрисовка на canvas.
+   Три независимых рисунка:
+     plot()   линейный график параметров во времени;
+     matrix() карта достоверности полей по последним пакетам;
+     scene()  трёхмерная модель спутника в связанной и опорной СК.
+   Никаких библиотек: примитивы canvas и арифметика матриц.
+   ========================================================================== */
+'use strict';
+window.CU = window.CU || {};
+CU.Views = (function () {
+  const FONT = 'ui-monospace, "SF Mono", Menlo, Consolas, monospace';
+  /* Значения CSS-переменных нужно читать в момент отрисовки: тема
+     переключается на лету, цвета должны меняться вместе с ней.         */
+  function tokens(element) {
+    const style = getComputedStyle(document.documentElement);
+    const read = name => style.getPropertyValue(name).trim();
+    return {
+      ink: read('--ink'),
+      ink3: read('--ink-3'),
+      rule: read('--rule'),
+      rule2: read('--rule-2'),
+      paper: read('--paper'),
+      surface: read('--surface'),
+      ok: read('--ok'),
+      warn: read('--warn'),
+      bad: read('--bad'),
+      series: [read('--c1'), read('--c2'), read('--c3'), read('--c4')],
+    };
+  }
+  /* Приводит размер полотна к пикселям устройства. Возвращает контекст
+     и размер в CSS-пикселях; вызывать перед каждой отрисовкой.        */
+  function prepare(canvas) {
+    const box = canvas.getBoundingClientRect();
+    const ratio = window.devicePixelRatio || 1;
+    const width = Math.max(1, Math.round(box.width));
+    const height = Math.max(1, Math.round(box.height));
+    if (canvas.width !== width * ratio || canvas.height !== height * ratio) {
+      canvas.width = width * ratio;
+      canvas.height = height * ratio;
+    }
+    const ctx = canvas.getContext('2d');
+    ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+    ctx.clearRect(0, 0, width, height);
+    ctx.textBaseline = 'middle';
+    return { ctx, width, height };
+  }
+  function withAlpha(color, alpha) {
+    const hex = color.replace('#', '');
+    const full = hex.length === 3 ? hex.split('').map(c => c + c).join('') : hex;
+    const number = parseInt(full, 16);
+    const r = (number >> 16) & 255, g = (number >> 8) & 255, b = number & 255;
+    return 'rgba(' + r + ',' + g + ',' + b + ',' + alpha + ')';
+  }
+  /* ── Линейный график ──────────────────────────────────────────────────
+     model = {
+       series: [{ label, points:[y|null], color, dash, hidden }],
+       unit, digits, band:[lo,hi]|null, thresholds:[{value,level,label}],
+       xLeft, xRight, empty
+     }
+     Точки с null не соединяются: разрыв показывает, что данных не было,
+     иначе график врёт.                                                  */
+  const PAD = { left: 54, right: 14, top: 12, bottom: 24 };
+  function plot(canvas, model) {
+    const { ctx, width, height } = prepare(canvas);
+    const t = tokens();
+    const plotWidth = width - PAD.left - PAD.right;
+    const plotHeight = height - PAD.top - PAD.bottom;
+    ctx.font = '10.5px ' + FONT;
+    ctx.textAlign = 'right';
+    const visible = model.series.filter(s => !s.hidden);
+    const values = [];
+    for (const item of visible) {
+      for (const value of item.points) if (value !== null && isFinite(value)) values.push(value);
+    }
+    if (!values.length) {
+      ctx.fillStyle = t.ink3;
+      ctx.textAlign = 'center';
+      ctx.fillText(model.empty || 'Нет данных', width / 2, height / 2);
+      return;
+    }
+    let lo = Math.min.apply(null, values);
+    let hi = Math.max.apply(null, values);
+    if (model.band) { lo = Math.min(lo, model.band[0]); hi = Math.max(hi, model.band[1]); }
+    if (model.thresholds) {
+      for (const line of model.thresholds) { lo = Math.min(lo, line.value); hi = Math.max(hi, line.value); }
+    }
+    if (hi - lo < 1e-9) { lo -= 1; hi += 1; }
+    const pad = (hi - lo) * 0.1;
+    lo -= pad; hi += pad;
+    const count = Math.max.apply(null, model.series.map(s => s.points.length));
+    const X = i => PAD.left + (count < 2 ? 0 : plotWidth * i / (count - 1));
+    const Y = value => PAD.top + plotHeight * (1 - (value - lo) / (hi - lo));
+    /* Полоса рабочего диапазона — подсказка «здесь норма» */
+    if (model.band) {
+      ctx.fillStyle = withAlpha(t.ok, 0.07);
+      const top = Y(model.band[1]), bottom = Y(model.band[0]);
+      ctx.fillRect(PAD.left, top, plotWidth, bottom - top);
+    }
+    /* Горизонтальная сетка: четыре линии и подписи значений */
+    ctx.strokeStyle = t.rule;
+    ctx.lineWidth = 1;
+    ctx.fillStyle = t.ink3;
+    ctx.textAlign = 'right';
+    const digits = model.digits === undefined ? 2 : model.digits;
+    for (let i = 0; i <= 3; i++) {
+      const value = hi - (hi - lo) * i / 3;
+      const y = Math.round(Y(value)) + 0.5;
+      ctx.beginPath();
+      ctx.moveTo(PAD.left, y);
+      ctx.lineTo(PAD.left + plotWidth, y);
+      ctx.stroke();
+      ctx.fillText(value.toFixed(digits), PAD.left - 8, y);
+    }
+    /* Пороги: волосяная линия и подпись справа */
+    for (const line of model.thresholds || []) {
+      const color = line.level === 2 ? t.bad : line.level === 1 ? t.warn : t.ok;
+      const y = Math.round(Y(line.value)) + 0.5;
+      ctx.save();
+      ctx.setLineDash([2, 3]);
+      ctx.strokeStyle = withAlpha(color, 0.85);
+      ctx.beginPath();
+      ctx.moveTo(PAD.left, y);
+      ctx.lineTo(PAD.left + plotWidth, y);
+      ctx.stroke();
+      ctx.restore();
+      ctx.fillStyle = color;
+      ctx.textAlign = 'left';
+      ctx.fillText(line.label, PAD.left + 4, y - 7);
+      ctx.textAlign = 'right';
+    }
+    /* Линии рядов */
+    for (const item of visible) {
+      const color = t.series[item.color % t.series.length];
+      ctx.save();
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 1.6;
+      ctx.lineJoin = 'round';
+      if (item.dash) ctx.setLineDash([5, 3]);
+      ctx.beginPath();
+      let started = false;
+      item.points.forEach((value, i) => {
+        if (value === null || !isFinite(value)) { started = false; return; }
+        const x = X(i), y = Y(value);
+        if (started) ctx.lineTo(x, y); else ctx.moveTo(x, y);
+        started = true;
+      });
+      ctx.stroke();
+      ctx.restore();
+      /* Отметка последнего значения: глазу проще снять показание */
+      const last = item.points[item.points.length - 1];
+      if (last !== null && last !== undefined && isFinite(last)) {
+        ctx.fillStyle = color;
+        ctx.fillRect(X(item.points.length - 1) - 2.5, Y(last) - 2.5, 5, 5);
+      }
+    }
+    /* Ось времени */
+    ctx.fillStyle = t.ink3;
+    ctx.textAlign = 'left';
+    ctx.fillText(model.xLeft || '', PAD.left, height - PAD.bottom / 2 + 1);
+    ctx.textAlign = 'right';
+    ctx.fillText(model.xRight || '', PAD.left + plotWidth, height - PAD.bottom / 2 + 1);
+  }
+  /* ── Карта достоверности полей ─────────────────────────────────────────
+     Строки — поля пакета, столбцы — последние пакеты. Заливка клетки
+     кодирует состояние поля, поэтому повреждение отдельного поля видно
+     точечно, а не «пакет целиком плохой».                               */
+  const FIELD_GUTTER = 46;
+  function matrix(canvas, states, fieldLabels, caption) {
+    const { ctx, width, height } = prepare(canvas);
+    const t = tokens();
+    const rows = fieldLabels.length;
+    const cols = states.length;
+    if (!rows || !cols) return;
+    const cellWidth = (width - FIELD_GUTTER) / cols;
+    const cellHeight = Math.min(13, (height - 14) / rows);
+    const top = 2;
+    ctx.font = '9.5px ' + FONT;
+    ctx.textAlign = 'right';
+    for (let row = 0; row < rows; row++) {
+      const y = top + row * cellHeight;
+      const issues = states.map(column => column[row]);
+      for (let col = 0; col < cols; col++) {
+        const state = issues[col];
+        if (state === 'ok') { ctx.fillStyle = withAlpha(t.ok, 0.18); }
+        else if (state === 'sat') { ctx.fillStyle = withAlpha(t.warn, 0.45); }
+        else if (state === 'off') { ctx.fillStyle = withAlpha(t.warn, 0.7); }
+        else { ctx.fillStyle = withAlpha(t.bad, 0.8); }
+        ctx.fillRect(FIELD_GUTTER + col * cellWidth, y, Math.max(1, cellWidth - 0.6), Math.max(1, cellHeight - 1.6));
+      }
+      const broken = issues.filter(state => state === 'bad').length;
+      const off = issues.filter(state => state === 'off').length;
+      ctx.fillStyle = broken ? t.bad : off ? t.warn : t.ink3;
+      ctx.fillText(fieldLabels[row], FIELD_GUTTER - 7, y + cellHeight / 2);
+    }
+    ctx.fillStyle = t.ink3;
+    ctx.textAlign = 'left';
+    ctx.fillText(caption || '', FIELD_GUTTER, top + rows * cellHeight + 6);
+    ctx.textAlign = 'right';
+    ctx.fillText('новые →', width, top + rows * cellHeight + 6);
+  }
+  /* ── Трёхмерная сцена ──────────────────────────────────────────────────
+     Модель: корпус (параллелепипед) и две солнечные панели по бортам.
+     Оси: прописные — опорная (инерциальная) СК, строчные — связанная СК.
+     Свет условный и фиксированный относительно наблюдателя: он нужен
+     только чтобы различать грани, а не для красоты.                    */
+  const view = { azimuth: 0.62, elevation: 0.42, distance: 7.4 };
+  const HOME = Object.assign({}, view);
+  const sub = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
+  const cross = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+  const dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+  const apply = (m, p) => [
+    m[0] * p[0] + m[1] * p[1] + m[2] * p[2],
+    m[3] * p[0] + m[4] * p[1] + m[5] * p[2],
+    m[6] * p[0] + m[7] * p[1] + m[8] * p[2],
+  ];
+  const multiply = (a, b) => [
+    a[0] * b[0] + a[1] * b[3] + a[2] * b[6], a[0] * b[1] + a[1] * b[4] + a[2] * b[7], a[0] * b[2] + a[1] * b[5] + a[2] * b[8],
+    a[3] * b[0] + a[4] * b[3] + a[5] * b[6], a[3] * b[1] + a[4] * b[4] + a[5] * b[7], a[3] * b[2] + a[4] * b[5] + a[5] * b[8],
+    a[6] * b[0] + a[7] * b[3] + a[8] * b[6], a[6] * b[1] + a[7] * b[4] + a[8] * b[7], a[6] * b[2] + a[7] * b[5] + a[8] * b[8],
+  ];
+  const rotateX = angle => [1, 0, 0, 0, Math.cos(angle), -Math.sin(angle), 0, Math.sin(angle), Math.cos(angle)];
+  const rotateY = angle => [Math.cos(angle), 0, Math.sin(angle), 0, 1, 0, -Math.sin(angle), 0, Math.cos(angle)];
+  const rotateZ = angle => [Math.cos(angle), -Math.sin(angle), 0, Math.sin(angle), Math.cos(angle), 0, 0, 0, 1];
+  /* Базис связанной СК в опорной: Rz(курс) · Ry(тангаж) · Rx(крен) */
+  function bodyBasis(roll, pitch, yaw) {
+    return multiply(
+      multiply(rotateZ(yaw), rotateY(pitch)),
+      rotateX(roll)
+    );
+  }
+  function buildBox(x0, x1, y0, y1, z0, z1) {
+    const p = [
+      [x0, y0, z0], [x1, y0, z0], [x1, y1, z0], [x0, y1, z0],
+      [x0, y0, z1], [x1, y0, z1], [x1, y1, z1], [x0, y1, z1],
+    ];
+    return [
+      [p[0], p[1], p[2], p[3]],
+      [p[5], p[4], p[7], p[6]],
+      [p[1], p[5], p[6], p[2]],
+      [p[4], p[0], p[3], p[7]],
+      [p[3], p[2], p[6], p[7]],
+      [p[4], p[5], p[1], p[0]],
+    ];
+  }
+  /* Геометрия спутника строится один раз: шесть граней корпуса,
+     две панели и линии ячеек на них. */
+  const GEOMETRY = (function () {
+    const faces = [];
+    for (const face of buildBox(-0.5, 0.5, -0.5, 0.5, -0.62, 0.62)) faces.push({ pts: face, panel: false });
+    for (const face of buildBox(-1.75, 1.75, 0.55, 0.6, -0.8, 0.8)) faces.push({ pts: face, panel: true });
+    for (const face of buildBox(-1.75, 1.75, -0.6, -0.55, -0.8, 0.8)) faces.push({ pts: face, panel: true });
+    const cells = [];
+    for (const sign of [1, -1]) {
+      for (let i = 1; i < 6; i++) {
+        const x = -1.75 + 3.5 * i / 6;
+        cells.push([[x, sign * 0.605, -0.8], [x, sign * 0.605, 0.8]]);
+      }
+      for (let j = 1; j < 3; j++) {
+        const z = -0.8 + 1.6 * j / 3;
+        cells.push([[-1.75, sign * 0.605, z], [1.75, sign * 0.605, z]]);
+      }
+    }
+    return { faces, cells };
+  })();
+  /* Внешняя нормаль грани: для выпуклых тел с центром в начале
+     координат достаточно сравнить с вектором к центру грани.            */
+  function outwardNormal(pts) {
+    const normal = cross(sub(pts[1], pts[0]), sub(pts[2], pts[0]));
+    const center = pts.reduce((sum, p) => [sum[0] + p[0], sum[1] + p[1], sum[2] + p[2]], [0, 0, 0])
+      .map(value => value / pts.length);
+    const length = Math.hypot(normal[0], normal[1], normal[2]) || 1;
+    const unit = [normal[0] / length, normal[1] / length, normal[2] / length];
+    return dot(unit, center) < 0 ? unit.map(value => -value) : unit;
+  }
+  const LIGHT = (function () {
+    const l = [-0.45, 0.62, 0.65];
+    const n = Math.hypot.apply(null, l);
+    return l.map(value => value / n);
+  })();
+  /**
+   * Рисует сцену.
+   * @param canvas   полотно
+   * @param model    { basis, trail:[vec3], valid, message }
+   */
+  function scene(canvas, model) {
+    const { ctx, width, height } = prepare(canvas);
+    const t = tokens();
+    const cx = width / 2, cy = height / 2;
+    const scale = Math.min(width, height) * 0.19;
+    const focal = 2.7;
+    const camera = multiply(rotateX(-view.elevation), rotateZ(-view.azimuth));
+    const basis = model.valid ? bodyBasis(model.roll, model.pitch, model.yaw) : null;
+    /* Проекция точки связанной СК в экранные координаты */
+    function project(point) {
+      const inertial = basis ? apply(basis, point) : point;
+      const p = apply(camera, inertial);
+      const z = p[2] + view.distance;
+      const k = focal / Math.max(0.35, focal - z);
+      return { x: cx + p[0] * k * scale, y: cy - p[1] * k * scale, depth: z, k };
+    }
+    function inertialNormal(normal) {
+      return basis ? apply(basis, normal) : normal;
+    }
+    ctx.font = '10.5px ' + FONT;
+    /* Опорная СК и плоскость экватора */
+    const reference = [
+      { axis: 'X', vector: [2.5, 0, 0] },
+      { axis: 'Y', vector: [0, 2.5, 0] },
+      { axis: 'Z', vector: [0, 0, 2.5] },
+    ];
+    ctx.save();
+    ctx.setLineDash([3, 3]);
+    ctx.strokeStyle = withAlpha(t.ink3, 0.75);
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    for (let i = 0; i <= 72; i++) {
+      const angle = i / 72 * Math.PI * 2;
+      const p = project([Math.cos(angle) * 2.15, 0, Math.sin(angle) * 2.15]);
+      if (i === 0) ctx.moveTo(p.x, p.y); else ctx.lineTo(p.x, p.y);
+    }
+    ctx.stroke();
+    ctx.restore();
+    for (const axis of reference) {
+      const from = project([0, 0, 0]);
+      const to = project(axis.vector);
+      ctx.save();
+      ctx.setLineDash([2, 3]);
+      ctx.strokeStyle = withAlpha(t.ink3, 0.8);
+      ctx.beginPath();
+      ctx.moveTo(from.x, from.y);
+      ctx.lineTo(to.x, to.y);
+      ctx.stroke();
+      ctx.restore();
+      ctx.fillStyle = t.ink3;
+      ctx.textAlign = 'center';
+      ctx.fillText(axis.axis, to.x, to.y - 7);
+    }
+    /* След движения панели: показывает, куда поворачивался аппарат */
+    if (model.trail && model.trail.length > 1) {
+      ctx.save();
+      ctx.lineWidth = 1.2;
+      for (let i = 1; i < model.trail.length; i++) {
+        const from = projectPoint(model.trail[i - 1]);
+        const to = projectPoint(model.trail[i]);
+        if (!from || !to) continue;
+        ctx.strokeStyle = withAlpha(t.series[1], (i / model.trail.length) * 0.5);
+        ctx.beginPath();
+        ctx.moveTo(from.x, from.y);
+        ctx.lineTo(to.x, to.y);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+    function projectPoint(inertialVector) {
+      const p = apply(camera, inertialVector);
+      const z = p[2] + view.distance;
+      const k = focal / Math.max(0.35, focal - z);
+      return { x: cx + p[0] * k * scale, y: cy - p[1] * k * scale };
+    }
+    /* Грани: сортировка по удалённости, затенение по ориентации */
+    const drawn = [];
+    for (const face of GEOMETRY.faces) {
+      const normal = inertialNormal(outwardNormal(face.pts));
+      const viewNormal = apply(camera, normal);
+      const center = face.pts.reduce((sum, p) => [sum[0] + p[0], sum[1] + p[1], sum[2] + p[2]], [0, 0, 0])
+        .map(value => value / face.pts.length);
+      const viewCenter = apply(camera, basis ? apply(basis, center) : center);
+      if (dot(viewNormal, viewCenter) > 0) continue;   /* грань от наблюдателя отвёрнута */
+      const shade = Math.max(0, dot(viewNormal, LIGHT));
+      drawn.push({ pts: face.pts, panel: face.panel, shade, depth: viewCenter[2] });
+    }
+    drawn.sort((a, b) => b.depth - a.depth);
+    for (const face of drawn) {
+      const projected = face.pts.map(project);
+      ctx.beginPath();
+      projected.forEach((p, i) => (i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y)));
+      ctx.closePath();
+      ctx.fillStyle = withAlpha(t.ink, 0.03 + 0.15 * face.shade);
+      ctx.fill();
+      ctx.strokeStyle = withAlpha(t.ink, 0.22 + 0.6 * face.shade);
+      ctx.lineWidth = face.panel ? 1 : 1.2;
+      ctx.stroke();
+    }
+    /* Линии ячеек солнечных панелей */
+    ctx.strokeStyle = withAlpha(t.ink, 0.3);
+    ctx.lineWidth = 0.8;
+    ctx.beginPath();
+    for (const cell of GEOMETRY.cells) {
+      const a = project(cell[0]), b = project(cell[1]);
+      ctx.moveTo(a.x, a.y);
+      ctx.lineTo(b.x, b.y);
+    }
+    ctx.stroke();
+    /* Связанная СК */
+    const axes = [
+      { label: 'x', vector: [1.95, 0, 0] },
+      { label: 'y', vector: [0, 1.95, 0] },
+      { label: 'z', vector: [0, 0, 1.95] },
+    ];
+    const origin = project([0, 0, 0]);
+    ctx.strokeStyle = t.series[1];
+    ctx.lineWidth = 1.4;
+    for (const axis of axes) {
+      const to = project(axis.vector);
+      ctx.beginPath();
+      ctx.moveTo(origin.x, origin.y);
+      ctx.lineTo(to.x, to.y);
+      ctx.stroke();
+      ctx.fillStyle = t.series[1];
+      ctx.textAlign = 'center';
+      ctx.fillText(axis.label, to.x + (to.x > origin.x ? 7 : -7), to.y - 7);
+    }
+    /* Подпись состояния */
+    ctx.fillStyle = t.ink3;
+    ctx.textAlign = 'left';
+    ctx.fillText(model.message || '', 2, height - 9);
+    ctx.textAlign = 'right';
+    ctx.fillText('тянуть — поворот · колесо — масштаб', width - 2, height - 9);
+  }
+  return { plot, matrix, scene, view, home: () => Object.assign(view, HOME) };
+})();
+</script>
+<script>
+/* js/app.js */
+/* =============================================================================
+   app.js — состояние приложения, приём данных и интерфейс пульта.
+   Архитектура
+   -----------
+   telemetry.js  формат пакета: разбор, допуски, единицы измерения
+   analysis.js   состояние модулей, статистика потока, отчёт о сеансе
+   views.js      отрисовка на canvas: графики, карта полей, 3D-сцена
+   app.js        (этот файл) связывает их с DOM: опрос эмулятора,
+                 воспроизведение записей, команды, журнал, настройки
+   Поток данных
+   ------------
+     эмулятор ──GET /telemetry──▶ poll() ──▶ ingest() ──▶ Stream ──▶ отрисовка
+                                    │
+                                    └── последний пакет кадра, поэтому
+                                        пропуски считаются по счётчику МК
+   Модули не знают друг о друге и ничего не знают о DOM; интерфейс только
+   читает их результаты. Благодаря этому разбор пакета можно проверить
+   без браузера, а отрисовку — без эмулятора.
+   ========================================================================== */
+'use strict';
+(function () {
+  const T = CU.Telemetry;
+  const A = CU.Analysis;
+  const V = CU.Views;
+  /* ── 1. Константы и утилиты ────────────────────────────────────────────*/
+  const STORE = 'cup.introsat.v1';
+  const MAX_EVENTS = 400;
+  const MAX_LOG_ROWS = 20000;
+  const MATRIX_FIELDS = 16;   // карта целостности: только поля данных
+  /* Значения по умолчанию. Пороги питания соответствуют комплекту
+     учебного пульта «ИнтроСат»: 7,2–8,5 В рабочий диапазон.            */
+  const DEFAULT_CFG = {
+    url: 'http://127.0.0.1:8765/telemetry',
+    poll: 60,        // интервал опроса, мс
+    stale: 3,        // потеря связи, с
+    pre: 'AA55',
+    post: '0D0A',
+    chaosLimit: 3,   // больше повреждённых полей — хаотичный пакет
+    vwLo: 7.2, vwHi: 8.5, vcLo: 6.6, vcHi: 8.7,
+    windowSec: 300,  // окно графика, с
+    theme: 'auto',
+    thresholds: 1,
+    animate: 1,
+    autoPoll: 1,     // подбирать интервал опроса по полноте потока
+  };
+  const $ = selector => document.querySelector(selector);
+  const $$ = selector => Array.prototype.slice.call(document.querySelectorAll(selector));
+  function escapeHtml(text) {
+    return String(text).replace(/[&<>"]/g, character => (
+      { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[character]
+    ));
+  }
+  const clock = () => new Date().toLocaleTimeString('ru-RU', { hour12: false });
+  function duration(seconds) {
+    const total = Math.max(0, Math.floor(seconds));
+    const h = Math.floor(total / 3600);
+    const m = Math.floor(total % 3600 / 60);
+    const s = total % 60;
+    const pad = value => String(value).padStart(2, '0');
+    return h ? h + ':' + pad(m) + ':' + pad(s) : m + ':' + pad(s);
+  }
+  const plural = (count, one, few, many) => {
+    const mod100 = count % 100, mod10 = count % 10;
+    if (mod100 >= 11 && mod100 <= 14) return many;
+    if (mod10 === 1) return one;
+    if (mod10 >= 2 && mod10 <= 4) return few;
+    return many;
+  };
+  const LEVEL_TEXT = ['Норма', 'Внимание', 'Авария'];
+  /* Локальное хранилище: настройки и журнал. Ошибки доступа (приватный
+     режим браузера) не должны останавливать работу пульта.               */
+  const storage = {
+    read(key) {
+      try { return JSON.parse(localStorage.getItem(STORE + '.' + key)); }
+      catch (error) { return null; }
+    },
+    write(key, value) {
+      try { localStorage.setItem(STORE + '.' + key, JSON.stringify(value)); return true; }
+      catch (error) { return false; }
+    },
+    drop(key) {
+      try { localStorage.removeItem(STORE + '.' + key); } catch (error) { /* пусто */ }
+    },
+  };
+  /* ── 2. Состояние ───────────────────────────────────────────────────────*/
+  const state = {
+    cfg: Object.assign({}, DEFAULT_CFG, storage.read('cfg') || {}),
+    mode: 'live',            // 'live' — эмулятор, 'replay' — запись
+    frozen: false,
+    net: 'wait',             // 'wait' | 'ok' | 'down'
+    stream: new A.Stream(),
+    frame: null,
+    modules: [],              // заполняется renderModules() при первом проходе
+    lastRaw: '',
+    latency: 0,
+    latencyMax: 0,
+    pollErrors: 0,
+    failStreak: 0,         // подряд неудачных опросов: основание для паузы
+    rollbackRun: 0,
+    rebootAt: 0,
+    events: [],
+    view: 'overview',
+    chartGroup: 'pwr',
+    hiddenSeries: {},
+    dirty: true,             // требуется перерисовать графики и сцену
+    trail: [],               // след нормали панелей для 3D-сцены
+    replay: { lines: [], i: 0, speed: 1, playing: true, credit: 0, name: '' },
+    savedSession: storage.read('log'),
+    commandChannel: 'unknown',  // 'unknown' | 'open' | 'local'
+    queue: [],
+    commandLog: [],
+    previousLevels: {},
+  };
+  const isStale = () => state.mode === 'live' && !state.frozen &&
+    state.stream.idleSeconds(Date.now()) > state.cfg.stale;
+  const rebooted = () => Date.now() - state.rebootAt < 15000;
+  /* ── 3. Журнал событий ──────────────────────────────────────────────────*/
+  function log(level, message) {
+    state.events.unshift({ t: clock(), l: level, msg: message });
+    if (state.events.length > MAX_EVENTS) state.events.pop();
+  }
+  /* ── 4. Приём пакета ────────────────────────────────────────────────────*/
+  /**
+   * Разбирает строку, обновляет счётчики и состояние.
+   * Возвращает true, если состояние изменилось и пора перерисовывать.
+   */
+  function ingest(raw, stamp) {
+    const frame = T.parse(raw, state.cfg);
+    T.derive(frame);
+    const result = state.stream.record(frame, stamp);
+    /* Серия одинаковых событий (например, 200 кадров подряд с меткой OFF)
+       схлопывается в одну запись: счётчик ведётся в «Потоке» и в списке
+       причин, а журнал остаётся читаемым.                                */
+    for (const note of result.notes) {
+      const last = state.events[0];
+      if (!last || last.msg !== note.text || last.l !== note.level) log(note.level, note.text);
+    }
+    /* Три отката счётчика подряд — не помеха, а перезапуск МК */
+    const rolled = result.notes.some(note => note.key === 'rollback');
+    state.rollbackRun = rolled ? state.rollbackRun + 1 : 0;
+    if (state.rollbackRun === 3 && result.accepted) {
+      state.rebootAt = Date.now();
+      log(1, 'Счётчик времени МК сброшен: вероятен перезапуск контроллера');
+    }
+    if (!result.accepted && frame.level === 2) {
+      /* одинаковые отказы не должны забивать журнал */
+      const last = state.events[0];
+      if (!last || !last.msg.startsWith(frame.reason || '')) log(2, 'Отклонён пакет: ' + frame.reason);
+      return true;
+    }
+    state.frame = frame;
+    updateTrail(frame);
+    return true;
+  }
+  /* Нормаль панелей в опорной СК — след движения для 3D-сцены */
+  function updateTrail(frame) {
+    const angles = A.attitude(frame);
+    if (angles.roll === null || angles.yaw === null) return;
+    const cr = Math.cos(angles.roll), sr = Math.sin(angles.roll);
+    const cp = Math.cos(angles.pitch), sp = Math.sin(angles.pitch);
+    const cy = Math.cos(angles.yaw), sy = Math.sin(angles.yaw);
+    /* третий столбец матрицы R = Rz(yaw)·Ry(pitch)·Rx(roll) */
+    const vector = [sp * sy, sp * cy, cp];
+    state.trail.push(vector);
+    if (state.trail.length > 110) state.trail.shift();
+  }
+  /* ── 5. Состояние канала ────────────────────────────────────────────────*/
+  function linkState() {
+    if (state.frozen) return { level: 1, text: 'Приём заморожен оператором' };
+    if (state.mode === 'replay') {
+      const replay = state.replay;
+      const done = replay.i >= replay.lines.length;
+      return {
+        level: 1,
+        text: done ? 'Запись воспроизведена полностью' : 'Воспроизведение записи · ' + replay.name,
+      };
+    }
+    if (state.net === 'down') return { level: 2, text: 'Эмулятор недоступен' };
+    if (state.net === 'wait') return { level: 1, text: 'Ожидание данных' };
+    if (isStale()) return { level: 2, text: 'Передача данных прекращена' };
+    return { level: 0, text: 'Приём телеметрии' };
+  }
+  /* Тревога собирается из состояния канала и состояния модулей —
+     это единственное место, где решается, что показывать оператору.   */
+  function alarmState() {
+    const items = [];
+    const link = linkState();
+    /* Если канал не работает, состояние модулей производно: перечислять
+       каждую строку «передача прекращена» не informative — достаточно
+       одной причины верхнего уровня.                                    */
+    if (link.level === 2) {
+      items.push({ level: 2, text: link.text });
+      if (state.mode === 'live') items.push({ level: 2, text: 'Проверьте, запущен ли эмулятор: python emulator.py' });
+      return { level: 2, items };
+    }
+    for (const module of state.modules) {
+      if (module.level > 0) {
+        items.push({ level: module.level, text: module.name + ' — ' + module.why });
+        if (module.level === 2) break;
+      }
+    }
+    const level = items.reduce((worst, item) => Math.max(worst, item.level), 0);
+    return { level, items };
+  }
+  /* ── 6. Источник данных ─────────────────────────────────────────────────*/
+  let inFlight = false;
+  /** Один опрос эмулятора. Ответ содержит только последний кадр. */
+  async function poll() {
+    if (state.frozen || state.mode !== 'live' || inFlight) return;
+    inFlight = true;
+    const started = performance.now();
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 2000);
+    try {
+      const response = await fetch(state.cfg.url, {
+        cache: 'no-store', signal: controller.signal, mode: 'cors',
+      });
+      if (response.status === 204) {
+        state.net = 'wait';
+        state.failStreak = 0;
+      } else if (response.ok) {
+        state.net = 'ok';
+        state.failStreak = 0;
+        state.latency = performance.now() - started;
+        state.latencyMax = Math.max(state.latencyMax, state.latency);
+        const text = (await response.text()).trim();
+        if (text && text !== state.lastRaw) {
+          state.lastRaw = text;
+          if (ingest(text)) state.dirty = true;
+        }
+      } else {
+        state.net = 'down';
+        state.failStreak++;
+      }
+    } catch (error) {
+      state.net = 'down';
+      state.failStreak++;
+      state.pollErrors++;
+    } finally {
+      clearTimeout(timer);
+      inFlight = false;
+    }
+  }
+  function pollLoop() {
+    poll();
+    /* Пока источник недоступен, опрос замедляется: иначе пульт пустым
+       запросом грузит порт и засоряет консоль браузера ошибками.     */
+    const backoff = state.net === 'down' ? Math.min(8, state.failStreak) : 1;
+    setTimeout(pollLoop, Math.min(1000, state.cfg.poll * backoff));
+  }
+  /**
+   * Подбор частоты опроса.
+   *
+   * Эмулятор отвечает только последним кадром, поэтому при слишком редком
+   * опросе часть потока физически не доходит до пульта. Счётчик МК
+   * позволяет это измерить: полнота потока падает вместе с частотой.
+   * Контроллер уменьшает интервал, пока поток теряется, и возвращает его
+   * обратно, когда запас появился.
+   */
+  const POLL_MIN = 40, POLL_MAX = 400;
+  let lastTune = 0;
+  function tunePolling(now) {
+    if (!state.cfg.autoPoll || now - lastTune < 5000) return;
+    if (state.stream.accepted < 40) return;
+    lastTune = now;
+    const completeness = state.stream.completeness(120);
+    if (completeness === null) return;
+    let next = state.cfg.poll;
+    if (completeness < 90) next = Math.max(POLL_MIN, Math.round(next * 0.8));
+    else if (completeness > 99.5 && next < 100) next = Math.min(100, Math.round(next * 1.08));
+    if (next === state.cfg.poll) return;
+    state.cfg.poll = next;
+    storage.write('cfg', state.cfg);
+    $('#setPoll').value = String(next);
+    log(1, 'Интервал опроса подобран автоматически: ' + next + ' мс, полнота потока ' +
+      completeness.toFixed(0) + ' %');
+  }
+  /* Воспроизведение записи: те же строки и тот же разбор, что и поток. */
+  function replayTick() {
+    const replay = state.replay;
+    if (state.mode !== 'replay' || !replay.playing || state.frozen) return;
+    if (replay.i >= replay.lines.length) {
+      replay.playing = false;
+      log(1, 'Запись воспроизведена полностью: ' + replay.lines.length + ' строк');
+      render();
+      return;
+    }
+    const batch = replay.speed === 0 ? 25 : Math.max(1, replay.speed);
+    for (let i = 0; i < batch && replay.i < replay.lines.length; i++) {
+      if (ingest(replay.lines[replay.i++])) state.dirty = true;
+    }
+  }
+  function startReplay(text, label) {
+    const lines = text.split(/\r?\n/).filter(line => line.trim());
+    if (lines.length && /ПРЕАМБУЛА/i.test(lines[0])) lines.shift();
+    if (!lines.length) { log(2, 'Файл пуст: ' + label); return; }
+    state.stream.reset();
+    state.frame = null;
+    state.events = [];
+    state.previousLevels = {};
+    state.trail = [];
+    state.lastRaw = '';
+    state.rebootAt = 0;
+    state.rollbackRun = 0;
+    state.mode = 'replay';
+    state.net = 'wait';
+    state.replay = { lines, i: 0, speed: Number($('#jrReplaySpeed').value), playing: true, credit: 0, name: label };
+    state.dirty = true;
+    log(0, 'Открыта запись «' + label + '»: строк ' + lines.length);
+    render();
+  }
+  function backToLive() {
+    state.mode = 'live';
+    state.stream.reset();
+    state.frame = null;
+    state.trail = [];
+    state.lastRaw = '';
+    state.net = 'wait';
+    state.rebootAt = 0;
+    state.rollbackRun = 0;
+    state.dirty = true;
+    log(0, 'Возврат к эмулятору');
+    render();
+  }
+  /* ── 7. Команды ─────────────────────────────────────────────────────────
+     Эмулятор телеметрии — приёмник: он реализует только GET /telemetry
+     и на любой другой запрос отвечает ошибкой. Поэтому пульт один раз
+     проверяет канал настоящим запросом и честно сообщает результат,
+     а не изображает передачу.                                            */
+  const COMMANDS = [
+    { code: 'PING', name: 'Проверка канала', note: 'Борт отвечает кадром с обновлённым временем МК.' },
+    { code: 'STATUS', name: 'Запрос телеметрии', note: 'Принудительная выдача всех показаний.' },
+    { code: 'WHEEL_SET', name: 'Скорость маховика', arg: { min: -32768, max: 32767, hint: 'знаковое целое число; знак задаёт направление вращения' } },
+    { code: 'RESET_IMU', name: 'Сброс оценки ориентации', note: 'Повторная триадизация по акселерометру и магнитометру.' },
+    { code: 'DUMP_LOG', name: 'Выгрузка журнала', note: 'Передать накопленный журнал на борт.' },
+  ];
+  function commandEndpoint() {
+    return state.cfg.url.replace(/\/[^/]*\/?$/, '/') + 'command';
+  }
+  /**
+   * Проверяет, объявлен ли на борту канал передачи команд.
+   *
+   * Запрос сделан методом GET: он не требует предзапроса CORS, поэтому
+   * ответ читается целиком. Эмулятор телеметрии отвечает на любой путь,
+   * кроме /telemetry, кодом 404 — это и есть однозначный признак того,
+   * что борт только слушает. Один запрос вместо перебора.
+   */
+  async function probeCommandChannel(quiet) {
+    const endpoint = commandEndpoint();
+    let verdict = 'local';
+    try {
+      const response = await fetch(endpoint, { cache: 'no-store', mode: 'cors' });
+      verdict = (response.ok || response.status === 405) ? 'open' : 'local';
+    } catch (error) {
+      verdict = 'local';
+    }
+    state.commandChannel = verdict;
+    renderChannel();
+    if (!quiet) {
+      log(verdict === 'open' ? 0 : 1,
+        verdict === 'open'
+          ? 'Борт принимает команды: ' + endpoint
+          : 'Борт объявил только приём телеметрии (' + endpoint + ' → ' +
+            (verdict === 'local' ? 'нет ответа или отказ' : 'отказ') + '); команды выполняются в локальной модели');
+    }
+    return verdict;
+  }
+  function renderChannel() {
+    const map = {
+      unknown: [1, 'Канал не проверен'],
+      open: [0, 'Канал передачи доступен'],
+      local: [1, 'Борт принимает только телеметрию'],
+    };
+    const entry = map[state.commandChannel];
+    const node = $('#cmChannel');
+    node.dataset.level = entry[0];
+    node.querySelector('.chan__text').textContent = entry[1];
+    $('#cmChannelMeta').textContent = state.commandChannel === 'local' ? 'только приём' : state.commandChannel;
+    $('#cmSubmit').disabled = state.frozen;
+  }
+  function submitCommand(event) {
+    event.preventDefault();
+    const code = $('#cmCmd').value;
+    const spec = COMMANDS.find(item => item.code === code);
+    const paramInput = $('#cmParam');
+    const error = $('#cmError');
+    let param = '';
+    if (spec.arg) {
+      const value = paramInput.value.trim();
+      if (!/^-?\d+$/.test(value) || Number(value) < spec.arg.min || Number(value) > spec.arg.max) {
+        error.hidden = false;
+        error.textContent = 'Аргумент — целое число от −' + (-spec.arg.min) + ' до ' + spec.arg.max;
+        paramInput.focus();
+        return;
+      }
+      param = value;
+    }
+    error.hidden = true;
+    const item = {
+      at: clock(),
+      code, param,
+      level: 1,
+      state: 'В очереди',
+      detail: '',
+      started: Date.now(),
+    };
+    state.queue.unshift(item);
+    if (state.queue.length > 60) state.queue.pop();
+    logCommand(1, 'Команда ' + code + (param ? ' (' + param + ')' : '') + ' поставлена в очередь');
+    renderQueue();
+    transmit(item);
+  }
+  /* Одна попытка настоящей передачи; при отказе канала команда
+     доставляется в локальной модели — с честной пометкой в журнале.   */
+  function transmit(item) {
+    if (state.commandChannel === 'unknown') probeCommandChannel(true);
+    const finish = (level, stateText, detail) => {
+      item.level = level;
+      item.state = stateText;
+      item.detail = detail;
+      const suffix = item.param ? ' (' + item.param + ')' : '';
+      logCommand(level, 'Команда ' + item.code + suffix + ': ' + stateText);
+      renderQueue();
+    };
+    setTimeout(async () => {
+      if (state.commandChannel === 'open') {
+        try {
+          const response = await fetch(commandEndpoint(), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ command: item.code, argument: item.param }),
+            cache: 'no-store',
+            mode: 'cors',
+          });
+          if (response.ok) { finish(0, 'Передана', 'ответ ' + response.status); return; }
+          state.commandChannel = 'local';
+          renderChannel();
+        } catch (error) { /* переходим в локальный режим ниже */ }
+      }
+      if (state.frozen || linkState().level === 2) {
+        finish(2, 'Не передана: нет подтверждённой связи с бортом',
+          'устраните аварию канала и повторите');
+        return;
+      }
+      const predicted = predictEffect(item);
+      finish(state.commandChannel === 'open' ? 0 : 1,
+        state.commandChannel === 'open' ? 'Передана' : 'Выполнена локально',
+        'эмулятор не принимает команды' + (predicted ? '; ' + predicted : ''));
+    }, 450 + Math.random() * 400);
+  }
+  /* Что команда должна изменить по телеметрии — показываем оператору
+     ожидаемый результат, а не просто «ок».                              */
+  function predictEffect(item) {
+    if (item.code !== 'WHEEL_SET' || !state.frame) return '';
+    const current = T.value(state.frame, 'wheel');
+    return 'ожидаемая скорость маховика ' + item.param +
+      (current === null ? '' : ' (сейчас ' + current + ')');
+  }
+  /* ── 8. Отрисовка: шапка, тревога, модули ───────────────────────────────*/
+  /* Полоса тревоги объявлена скринридеру (role=status + aria-live).
+     Переписывать её на каждом проходе отрисовки нельзя: озвучка повторит
+     один и тот же текст. Поэтому DOM трогается только при смене текста.  */
+  let alarmSignature = '';
+  function renderChrome() {
+    const link = linkState();
+    const node = $('#linkState');
+    node.dataset.level = link.level;
+    $('#linkLabel').textContent = link.text;
+    const summary = state.stream.summary();
+    $('#ro-mk').textContent = state.frame ? state.frame.mk : '—';
+    $('#ro-ok').textContent = summary.accepted;
+    $('#ro-bad').textContent = summary.rejected;
+    $('#ro-rate').innerHTML = (summary.rate ? summary.rate.toFixed(1) : '—') + '<span class="unit">Гц</span>';
+    $('#ro-bad').style.color = summary.rejected ? 'var(--bad)' : '';
+    $('#ro-ok').style.color = summary.defective ? 'var(--warn)' : '';
+    $('#btnFreeze').setAttribute('aria-pressed', String(state.frozen));
+    $('#btnFreeze').textContent = state.frozen ? 'Возобновить' : 'Заморозить';
+    const conn = { ok: 'эмулятор отвечает', down: 'нет ответа', wait: 'ожидание данных' };
+    $('#setConnMeta').textContent = conn[state.net] || '—';
+    const alarm = alarmState();
+    const bar = $('#alarmBar');
+    bar.hidden = alarm.level === 0;
+    const shown = alarm.items.slice(0, 3).map(item => item.text).join('; ');
+    const rest = alarm.items.length - 3;
+    const signature = alarm.level + '|' + shown + '|' + rest;
+    if (signature !== alarmSignature) {
+      alarmSignature = signature;
+      bar.dataset.level = alarm.level || '';
+      bar.innerHTML = alarm.level
+        ? '<span class="alarm__label">' + (alarm.level === 2 ? 'Авария' : 'Внимание') + '</span>' +
+          '<span class="alarm__text">' + escapeHtml(shown) + (rest > 0 ? '; и ещё ' + rest : '') + '</span>'
+        : '';
+    }
+  }
+  function renderModules() {
+    state.modules = A.modules(state.frame, {
+      cfg: state.cfg,
+      stale: isStale(),
+      rebooted: rebooted(),
+    });
+    const problems = state.modules.filter(module => module.level > 0);
+    $('#ovModulesMeta').textContent = state.frame
+      ? state.modules.length + ' ' + plural(state.modules.length, 'модуль', 'модуля', 'модулей') +
+        (problems.length ? ' · ' + problems.length + ' с замечаниями' : ' · все в норме')
+      : 'нет данных';
+    $('#ovModules').innerHTML = state.modules.map(module => (
+      '<tr>' +
+        '<th scope="row"><span class="mod-name">' + escapeHtml(module.name) + '</span>' +
+        '<span class="mod-role">' + escapeHtml(module.role) + '</span></th>' +
+        '<td>' + escapeHtml(module.reading) + '</td>' +
+        '<td><span class="state' + (module.level === 2 ? ' is-alarm' : '') + '" data-level="' + module.level + '">' +
+        LEVEL_TEXT[module.level] + '</span>' +
+        '<span class="state__why">' + escapeHtml(module.why) + '</span></td>' +
+      '</tr>'
+    )).join('');
+    /* Изменение состояния модуля само по себе является событием */
+    for (const module of state.modules) {
+      const previous = state.previousLevels[module.id];
+      if (previous !== undefined && previous !== module.level && state.frame) {
+        log(module.level, module.name + ': ' + module.why);
+      }
+      state.previousLevels[module.id] = module.level;
+    }
+  }
+  function renderStream() {
+    const summary = state.stream.summary();
+    $('#ovFlowMeta').textContent = 'сеанс ' + duration(summary.uptime);
+    const rows = [
+      ['Длительность сеанса', duration(summary.uptime)],
+      ['Частота обновления', summary.rate.toFixed(2) + ' <span class="unit">Гц</span>'],
+      ['Задержка опроса', Math.round(state.latency) + ' <span class="unit">мс</span>'],
+      ['Задержка, максимум', Math.round(state.latencyMax) + ' <span class="unit">мс</span>'],
+      ['Пропущено по счётчику МК', String(summary.lost)],
+      ['Полнота потока, сеанс', summary.completeness === null ? '—' : summary.completeness.toFixed(1) + ' <span class="unit">%</span>'],
+      ['Полнота потока, 2 мин', summary.recentCompleteness === null ? '—' : summary.recentCompleteness.toFixed(1) + ' <span class="unit">%</span>'],
+      ['Принято с замечаниями', String(summary.defective)],
+      ['Ошибок опроса', String(state.pollErrors)],
+    ];
+    $('#ovStats').innerHTML = rows.map(row =>
+      '<dt>' + row[0] + '</dt><dd>' + row[1] + '</dd>').join('');
+    const frame = state.frame;
+    $('#ovRawMeta').textContent = frame ? 'МК ' + frame.mk + ' с' : '—';
+    const raw = $('#ovRaw');
+    raw.textContent = state.lastRaw || '—';
+    raw.dataset.level = frame ? (frame.level === 2 ? 2 : 0) : 0;
+    $('#ovRawNote').textContent = frame && frame.level === 1
+      ? frame.reason
+      : 'Эмулятор отдаёт только последний кадр: между двумя полученными пакетами счётчик МК может вырасти на несколько.';
+  }
+  /* ── 9. Отрисовка: графики и поля ───────────────────────────────────────*/
+  /* Кадры, попавшие в окно графика. Граница ищется делением пополам
+     внутри Stream — здесь только отбрасывается всё старше окна. */
+  function windowFrames() {
+    return state.stream.framesSince(Date.now() - state.cfg.windowSec * 1000);
+  }
+  function renderVoltage() {
+    const frames = windowFrames();
+    const cfg = state.cfg;
+    const points = frames.map(frame => frame.groups.akb);
+    $('#ovVoltMeta').textContent = 'В · ' + (state.cfg.windowSec / 60) + ' мин';
+    V.plot($('#ovVoltChart'), {
+      series: [{ label: 'АКБ', points, color: 0 }],
+      digits: 2,
+      band: [cfg.vwLo, cfg.vwHi],
+      thresholds: cfg.thresholds ? [
+        { value: cfg.vcLo, level: 2, label: 'авария ' + cfg.vcLo.toFixed(2) },
+        { value: cfg.vwLo, level: 1, label: 'внимание ' + cfg.vwLo.toFixed(2) },
+        { value: cfg.vwHi, level: 1, label: 'внимание ' + cfg.vwHi.toFixed(2) },
+        { value: cfg.vcHi, level: 2, label: 'авария ' + cfg.vcHi.toFixed(2) },
+      ] : [],
+      xLeft: '−' + duration(state.cfg.windowSec) + ' назад',
+      xRight: 'сейчас',
+      empty: 'Ожидание данных от эмулятора',
+    });
+    $('#ovVoltLegend').innerHTML = cfg.thresholds
+      ? '<li><span class="key" style="border-color:var(--ok);opacity:.35"></span>рабочий диапазон ' +
+        cfg.vwLo.toFixed(2) + '…' + cfg.vwHi.toFixed(2) + ' В</li>' +
+        '<li><span class="key" style="border-top-style:dashed;border-color:var(--bad)"></span>границы аварии</li>'
+      : '';
+  }
+  /* Переключатель групп параметров строится из протокола: новый ряд
+     датчиков в пакете появится в интерфейсе автоматически.             */
+  function buildGroupTabs() {
+    $('#tlGroups').innerHTML = T.CHART_GROUPS.map(group =>
+      '<button type="button" role="tab" data-group="' + group.key + '" aria-selected="' +
+      (group.key === state.chartGroup) + '">' + group.name + '</button>').join('');
+  }
+  function renderTelemetryChart() {
+    const group = T.CHART_GROUPS.find(item => item.key === state.chartGroup) || T.CHART_GROUPS[0];
+    const frames = windowFrames();
+    const series = group.series.map(item => ({
+      label: item.label,
+      color: item.color,
+      dash: item.dash,
+      hidden: state.hiddenSeries[group.key + item.label],
+      points: frames.map(frame => T.value(frame, item.key)),
+    }));
+    V.plot($('#tlChart'), {
+      series, digits: group.digits,
+      xLeft: '−' + duration(state.cfg.windowSec) + ' назад',
+      xRight: 'сейчас',
+      empty: state.frame ? 'Нет данных по этой группе: датчик недоступен' : 'Ожидание данных',
+    });
+    /* Легенда одновременно показывает текущие значения и позволяет
+       убрать шумный ряд: сравнение «все оси сразу» мешает читать график. */
+    $('#tlLegend').innerHTML = series.map(item => {
+      const last = item.points.length ? item.points[item.points.length - 1] : null;
+      const value = last === null || last === undefined ? 'нет данных' : last.toFixed(group.digits) + ' ' + group.unit;
+      const key = group.key + item.label;
+      return '<li><button type="button" data-series="' + escapeHtml(key) + '" aria-pressed="' +
+        (!item.hidden) + '"><i class="key" style="border-color:var(--c' + ((item.color % 4) + 1) + ');' +
+        (item.dash ? 'border-top-style:dashed' : '') + '"></i>' + escapeHtml(item.label) +
+        '<span class="val">' + escapeHtml(value) + '</span></button></li>';
+    }).join('');
+  }
+  function renderFields() {
+    const frame = state.frame;
+    if (!frame) {
+      $('#tlFieldsMeta').textContent = 'нет данных';
+      $('#tlFields').innerHTML = '';
+      return;
+    }
+    const issues = T.FIELDS.map((def, i) => state.stream.fieldIssue(i)).filter(item => item.total > 0).length;
+    $('#tlFieldsMeta').textContent = T.FIELDS.length + ' ' +
+      plural(T.FIELDS.length, 'поле', 'поля', 'полей') +
+      (issues ? ' · с замечаниями ' + issues : ' · все достоверны');
+    $('#tlFields').innerHTML = T.FIELDS.map((def, i) => {
+      const slot = frame.fields[i];
+      const info = T.STATE_TEXT[slot.state];
+      const digits = def.kind === 'raw' || def.kind === 'time' ? 0 : 3;
+      const physical = slot.value === null ? '—' : slot.value.toFixed(digits) + ' ' + def.unit;
+      return '<tr>' +
+        '<th scope="row">' + escapeHtml(def.label) +
+        '<span class="mod-role">' + (def.kind === 'scaled' ? '÷ ' + def.div + ' → ' + def.unit : 'как есть') + '</span></th>' +
+        '<td class="num">' + escapeHtml(slot.token || '—') + '</td>' +
+        '<td class="num">' + escapeHtml(physical) + '</td>' +
+        '<td><span class="state" data-level="' + info[1] + '">' + escapeHtml(info[0]) + '</span></td>' +
+        '</tr>';
+    }).join('');
+  }
+  function renderMatrix() {
+    const labels = T.FIELDS.slice(1).map(def => def.short);
+    const columns = state.stream.matrix;
+    V.matrix($('#tlMatrix'), columns, labels, 'последние ' + columns.length + ' ' +
+      plural(columns.length, 'пакет', 'пакета', 'пакетов'));
+    $('#tlMatrixMeta').textContent = columns.length + ' пакетов · ' + T.FIELDS.length + ' полей';
+    $('#tlMatrixLegend').innerHTML =
+      '<li><i class="swatch swatch--ok"></i>достоверно</li>' +
+      '<li><i class="swatch swatch--warn"></i>OFF</li>' +
+      '<li><i class="swatch swatch--warn" style="opacity:.5"></li>насыщение</li>' +
+      '<li><i class="swatch swatch--bad"></i>повреждено</li>';
+  }
+  function renderDefects() {
+    const list = state.stream.defectList();
+    const total = list.reduce((sum, item) => sum + item.count, 0);
+    $('#tlDefectsMeta').textContent = total ? 'всего ' + total : 'отклонений нет';
+    if (!list.length) {
+      $('#tlDefects').innerHTML = '<li class="note">Отклонений нет: поток соответствует протоколу.</li>';
+      return;
+    }
+    $('#tlDefects').innerHTML = list.slice(0, 8).map(item => {
+      const share = Math.round(item.count / list[0].count * 100);
+      return '<li><div class="row"><span>' + escapeHtml(item.sample || item.key) + '</span><span>' + item.count + '</span></div>' +
+        '<div class="bar"><i style="width:' + share + '%"></i></div></li>';
+    }).join('');
+  }
+  /* ── 10. Ориентация ─────────────────────────────────────────────────────*/
+  function renderAttitude() {
+    const frame = state.frame;
+    const angles = frame ? A.attitude(frame) : { roll: null, pitch: null, yaw: null, accValid: false, magValid: false };
+    const degrees = A.degrees;
+    $('#atAngles').innerHTML =
+      '<dt>Крен, φ</dt><dd>' + degrees(angles.roll) + '</dd>' +
+      '<dt>Тангаж, θ</dt><dd>' + degrees(angles.pitch) + '</dd>' +
+      '<dt>Курс, ψ</dt><dd>' + degrees(angles.yaw) + '</dd>';
+    const omega = frame && frame.groups.g;
+    const omegaAbs = omega ? Math.hypot.apply(null, omega) : null;
+    $('#atRates').innerHTML =
+      '<dt>ω по X</dt><dd>' + (omega ? omega[0].toFixed(2) : '—') + '</dd>' +
+      '<dt>ω по Y</dt><dd>' + (omega ? omega[1].toFixed(2) : '—') + '</dd>' +
+      '<dt>ω по Z</dt><dd>' + (omega ? omega[2].toFixed(2) : '—') + '</dd>' +
+      '<dt>Модуль |ω|</dt><dd>' + (omegaAbs === null ? '—' : omegaAbs.toFixed(2)) + '</dd>';
+    const field = frame && frame.groups.m;
+    const fieldAbs = field ? Math.hypot.apply(null, field) : null;
+    $('#atMag').innerHTML =
+      '<dt>Модуль |B|</dt><dd>' + (fieldAbs === null ? '—' : fieldAbs.toFixed(3)) + '</dd>' +
+      '<dt>B по X</dt><dd>' + (field ? field[0].toFixed(3) : '—') + '</dd>' +
+      '<dt>B по Y</dt><dd>' + (field ? field[1].toFixed(3) : '—') + '</dd>' +
+      '<dt>B по Z</dt><dd>' + (field ? field[2].toFixed(3) : '—') + '</dd>';
+    $('#atNote').textContent = !frame
+      ? 'Ожидание данных: ориентация выводится из акселерометра и магнитометра.'
+      : 'Крен и тангаж — из акселерометра (он задаёт направление «вниз»), курс — из магнитометра. ' +
+        'Это мгновенная оценка без гироскопической интеграции, поэтому она шумная на орбите.';
+    V.scene($('#atScene'), {
+      roll: angles.roll || 0,
+      pitch: angles.pitch || 0,
+      yaw: angles.yaw || 0,
+      valid: angles.accValid && angles.magValid,
+      trail: state.trail,
+      message: angles.accValid && angles.magValid
+        ? 'оценка по данным датчиков'
+        : 'часть датчиков недоступна — ориентация показана условно',
+    });
+  }
+  function buildAttitudeLegend() {
+    $('#atLegend').innerHTML =
+      '<li><i class="key" style="border-top-style:dashed;border-color:var(--ink-3)"></i>опорная СК, X Y Z</li>' +
+      '<li><i class="key" style="border-color:var(--c2)"></i>связанная СК, x y z</li>' +
+      '<li><i class="key" style="border-color:var(--c2);opacity:.45"></i>след нормали панелей</li>' +
+      '<li><i class="key" style="border-top-style:dotted;border-color:var(--ink-3)"></i>плоскость экватора</li>';
+  }
+  /* ── 11. Команды, журнал, настройки ──────────────────────────────────────*/
+  function renderQueue() {
+    $('#cmQueueMeta').textContent = state.queue.length
+      ? state.queue.length + ' ' + plural(state.queue.length, 'запись', 'записи', 'записей')
+      : 'пусто';
+    $('#cmQueue').innerHTML = state.queue.slice(0, 30).map(item =>
+      '<tr><td>' + item.at + '</td><td>' + escapeHtml(item.code) + '</td>' +
+      '<td class="num">' + escapeHtml(item.param || '—') + '</td>' +
+      '<td><span class="state" data-level="' + item.level + '">' + escapeHtml(item.state) + '</span>' +
+      (item.detail ? '<span class="state__why">' + escapeHtml(item.detail) + '</span>' : '') +
+      '</td></tr>').join('');
+    $('#cmLogMeta').textContent = state.commandLog.length + ' ' +
+      plural(state.commandLog.length, 'запись', 'записи', 'записей');
+    $('#cmLog').innerHTML = state.commandLog.slice(0, 30).map(entry =>
+      '<li><time>' + entry.t + '</time><i class="mark" data-level="' + entry.l + '"></i>' +
+      '<span class="msg">' + escapeHtml(entry.msg) + '</span></li>').join('') ||
+      '<li><span class="note">Команды ещё не отправлялись.</span></li>';
+  }
+  /* Записи о командах попадают и в общий журнал сеанса, и в свой список —
+     оператор видит команду в контексте остальных событий. */
+  function logCommand(level, message) {
+    log(level, message);
+    state.commandLog.unshift({ t: clock(), l: level, msg: message });
+    if (state.commandLog.length > 80) state.commandLog.pop();
+  }
+  /* Один журнал команд на все экраны: он уже ведётся в logCommand(). */
+  function renderJournal() {
+    const level = $('#jrLevel').value;
+    const items = state.events.filter(event => level === 'all' || event.l >= Number(level));
+    $('#jrEvents').innerHTML = items.slice(0, 80).map(event =>
+      '<li><time>' + event.t + '</time><i class="mark" data-level="' + event.l + '"></i>' +
+      '<span class="msg">' + escapeHtml(event.msg) + '</span></li>').join('') ||
+      '<li><span class="note">Событий этого уровня пока нет.</span></li>';
+    const onlyBad = $('#jrOnlyBad').checked;
+    const query = $('#jrSearch').value.trim().toLowerCase();
+    const rows = state.stream.log.filter(entry => {
+      if (onlyBad && entry.level === 0) return false;
+      if (!query) return true;
+      return (entry.raw + ' ' + (entry.reason || '') + ' ' + (entry.mk === null ? '' : entry.mk))
+        .toLowerCase().includes(query);
+    }).slice(-120).reverse();
+    $('#jrPacketsMeta').textContent = state.stream.log.length + ' ' +
+      plural(state.stream.log.length, 'запись', 'записи', 'записей') +
+      (rows.length !== state.stream.log.length ? ' · показано ' + rows.length : '');
+    $('#jrPackets').innerHTML = rows.map(entry =>
+      '<tr><td>' + new Date(entry.at).toLocaleTimeString('ru-RU', { hour12: false }) + '</td>' +
+      '<td class="num">' + (entry.mk === null ? '—' : entry.mk) + '</td>' +
+      '<td class="mono" style="font-size:12px">' + escapeHtml(entry.raw.length > 58 ? entry.raw.slice(0, 58) + '…' : entry.raw) +
+      '<span class="sr-only">' + escapeHtml(entry.raw) + '</span></td>' +
+      '<td><span class="state" data-level="' + (entry.level === 0 ? 0 : entry.level === 1 ? 1 : 2) + '">' +
+      (entry.level === 0 ? 'Принят' : escapeHtml(entry.reason || 'С замечаниями')) + '</span></td></tr>').join('') ||
+      '<tr><td colspan="4" class="note">Нет записей по фильтру.</td></tr>';
+    const summary = state.stream.summary();
+    $('#jrReportMeta').textContent = 'на ' + clock();
+    $('#jrReport').innerHTML = [
+      ['Длительность сеанса', duration(summary.uptime)],
+      ['Принято пакетов', String(summary.accepted)],
+      ['С замечаниями', String(summary.defective)],
+      ['Отклонено', String(summary.rejected)],
+      ['Пропущено по счётчику МК', String(summary.lost)],
+      ['Полнота потока', summary.completeness === null ? '—' : summary.completeness.toFixed(1) + ' <span class="unit">%</span>'],
+      ['Частота', summary.rate.toFixed(2) + ' <span class="unit">Гц</span>'],
+      ['Событий в журнале', String(state.events.length)],
+    ].map(row => '<dt>' + row[0] + '</dt><dd>' + row[1] + '</dd>').join('');
+    $('#jrReplayMeta').innerHTML = state.mode === 'replay'
+      ? '<dt>Источник</dt><dd>' + escapeHtml(state.replay.name) + '</dd>' +
+        '<dt>Позиция</dt><dd>' + state.replay.i + ' / ' + state.replay.lines.length + '</dd>' +
+        '<dt>Темп</dt><dd>' + (state.replay.speed ? '×' + state.replay.speed : 'без пауз') + '</dd>'
+      : '';
+    $('#jrToLive').hidden = state.mode !== 'replay';
+    $('#jrReplayTools').hidden = state.mode !== 'replay';
+    $('#jrReplayToggle').textContent = state.replay.playing ? 'Пауза' : 'Продолжить';
+    $('#jrResumeSession').hidden = state.mode === 'replay' || !state.savedSession;
+    $('#jrResumeSession').textContent = state.savedSession
+      ? 'Продолжить прошлый сеанс · ' + state.savedSession.length + ' пакетов'
+      : 'Продолжить прошлый сеанс';
+  }
+  function download(name, text, type) {
+    const url = URL.createObjectURL(new Blob([text], { type: type + ';charset=utf-8' }));
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = name;
+    anchor.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+  function stamp() {
+    return new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
+  }
+  /* Выгрузка в формате эмулятора: 18 полей, без лишних колонок,
+     поэтому такой файл можно и открыть в пульте, и скормить эмулятору. */
+  function exportLog() {
+    const frames = state.stream.frames;
+    if (!frames.length) { log(1, 'Выгружать нечего: пакетов нет'); return; }
+    const text = T.headerLine() + '\r\n' + frames.map(frame => frame.raw).join('\r\n');
+    /* BOM нужен, чтобы Excel открыл кириллицу в заголовке без плясок */
+    download('introsat-log-' + stamp() + '.csv', '﻿' + text, 'text/csv');
+    /* В файл попадает глубина истории, а не весь сеанс: честнее сказать
+       об этом, чем сохранить 20 000 последних пакетов под именем
+       «журнал сеанса».                                                   */
+    log(0, 'Журнал сохранён: ' + frames.length + ' ' +
+      plural(frames.length, 'последний пакет', 'последних пакета', 'последних пакетов') +
+      (frames.length >= 20000 ? ' — глубина истории сеанса' : ''));
+  }
+  function exportReport() {
+    const text = A.report(state.stream, {
+      now: Date.now(),
+      source: state.mode === 'replay' ? 'запись «' + state.replay.name + '»' : state.cfg.url,
+      latency: state.latency,
+      pollErrors: state.pollErrors,
+      modules: state.modules,
+      frame: state.frame,
+      events: state.events,
+      cfg: state.cfg,
+    });
+    download('introsat-report-' + stamp() + '.txt', text, 'text/plain');
+    log(0, 'Отчёт о сеансе сохранён');
+  }
+  function fillSettings() {
+    const map = {
+      setUrl: 'url', setPoll: 'poll', setStale: 'stale', setPre: 'pre', setPost: 'post',
+      setVwLo: 'vwLo', setVwHi: 'vwHi', setVcLo: 'vcLo', setVcHi: 'vcHi',
+      setTheme: 'theme', setThresholds: 'thresholds', setAnimate: 'animate',
+    };
+    for (const [id, key] of Object.entries(map)) $('#' + id).value = state.cfg[key];
+    $('#tlWindow').value = String(state.cfg.windowSec);
+    $('#setInfo').innerHTML = [
+      ['Версия пульта', '1.0'],
+      ['Протокол пакета', T.PACKET_SIZE + ' ' + plural(T.PACKET_SIZE, 'поле', 'поля', 'полей') + ', разделитель «;»'],
+      ['Поля данных', String(MATRIX_FIELDS)],
+      ['Источник по умолчанию', '127.0.0.1:8765'],
+      ['Хранение', 'localStorage, без передачи данных'],
+    ].map(row => '<dt>' + row[0] + '</dt><dd>' + row[1] + '</dd>').join('');
+  }
+  function saveSettings() {
+    const map = {
+      setUrl: 'url', setPoll: 'poll', setStale: 'stale', setPre: 'pre', setPost: 'post',
+      setVwLo: 'vwLo', setVwHi: 'vwHi', setVcLo: 'vcLo', setVcHi: 'vcHi',
+      setTheme: 'theme', setThresholds: 'thresholds', setAnimate: 'animate',
+    };
+    for (const [id, key] of Object.entries(map)) {
+      const raw = $('#' + id).value;
+      const numeric = ['poll', 'stale', 'vwLo', 'vwHi', 'vcLo', 'vcHi', 'thresholds', 'animate'].indexOf(key) >= 0;
+      state.cfg[key] = numeric ? (Number(raw) || DEFAULT_CFG[key]) : raw.trim();
+    }
+    /* Ручная правка интервала отключает автоподборку: решение оператора
+       важнее оптимизации.                                             */
+    const stored = storage.read('cfg');
+    if (Number($('#setPoll').value) !== Number(stored && stored.poll)) state.cfg.autoPoll = 0;
+    state.cfg.windowSec = Number($('#tlWindow').value) || DEFAULT_CFG.windowSec;
+    if (!state.cfg.url) state.cfg.url = DEFAULT_CFG.url;
+    storage.write('cfg', state.cfg);
+    applyTheme();
+    state.stream.reset();
+    state.frame = null;
+    state.lastRaw = '';
+    log(0, 'Настройки сохранены, счётчики сеанса сброшены');
+    render();
+  }
+  function applyTheme() {
+    document.documentElement.dataset.theme = state.cfg.theme;
+    document.body.classList.toggle('no-motion', !Number(state.cfg.animate));
+    $('#setThresholds').value = String(state.cfg.thresholds);
+    $('#setAnimate').value = String(state.cfg.animate);
+    state.dirty = true;
+  }
+  /* ── 12. Экраны, события интерфейса, клавиатура ─────────────────────────*/
+  function showView(name) {
+    state.view = name;
+    $$('#tabList [role="tab"]').forEach(tab => {
+      tab.setAttribute('aria-selected', String(tab.dataset.view === name));
+    });
+    $$('.view').forEach(view => { view.hidden = view.id !== 'view-' + name; });
+    state.dirty = true;
+    render();
+    if (name === 'journal') renderJournal();
+    if (name === 'settings') fillSettings();
+  }
+  function render() {
+    renderModules();
+    renderChrome();
+    tunePolling(Date.now());
+    if (!state.dirty) {
+      if (state.view === 'overview') renderStream();
+      return;
+    }
+    state.dirty = false;
+    if (state.view === 'overview') { renderStream(); renderVoltage(); }
+    if (state.view === 'telemetry') { renderTelemetryChart(); renderFields(); renderMatrix(); renderDefects(); }
+    if (state.view === 'attitude') renderAttitude();
+    if (state.view === 'commands') renderQueue();
+    if (state.view === 'journal') renderJournal();
+  }
+  function bindEvents() {
+    /* Навигация */
+    $('#tabList').addEventListener('click', event => {
+      const tab = event.target.closest('[role="tab"]');
+      if (tab) showView(tab.dataset.view);
+    });
+    $('#tabList').addEventListener('keydown', event => {
+      const tabs = $$('#tabList [role="tab"]');
+      const index = tabs.indexOf(document.activeElement);
+      if (index < 0) return;
+      let next = index;
+      if (event.key === 'ArrowRight') next = (index + 1) % tabs.length;
+      else if (event.key === 'ArrowLeft') next = (index - 1 + tabs.length) % tabs.length;
+      else if (event.key === 'Home') next = 0;
+      else if (event.key === 'End') next = tabs.length - 1;
+      else return;
+      event.preventDefault();
+      tabs[next].focus();
+      showView(tabs[next].dataset.view);
+    });
+    /* Шапка */
+    $('#btnFreeze').addEventListener('click', () => {
+      state.frozen = !state.frozen;
+      log(1, state.frozen ? 'Приём заморожен оператором' : 'Приём возобновлён');
+      render();
+    });
+    $('#btnTheme').addEventListener('click', () => {
+      const order = ['auto', 'light', 'dark'];
+      state.cfg.theme = order[(order.indexOf(state.cfg.theme) + 1) % order.length];
+      applyTheme();
+      storage.write('cfg', state.cfg);
+      log(0, 'Тема оформления: ' + ({ auto: 'как в системе', light: 'светлая', dark: 'тёмная' })[state.cfg.theme]);
+      render();
+    });
+    $('#btnHelp').addEventListener('click', () => $('#helpSheet').showModal());
+    /* Телеметрия */
+    $('#tlGroups').addEventListener('click', event => {
+      const tab = event.target.closest('[data-group]');
+      if (!tab) return;
+      state.chartGroup = tab.dataset.group;
+      buildGroupTabs();
+      state.dirty = true;
+      render();
+    });
+    $('#tlLegend').addEventListener('click', event => {
+      const button = event.target.closest('[data-series]');
+      if (!button) return;
+      const key = button.dataset.series;
+      state.hiddenSeries[key] = !state.hiddenSeries[key];
+      state.dirty = true;
+      render();
+    });
+    $('#tlWindow').addEventListener('change', () => {
+      state.cfg.windowSec = Number($('#tlWindow').value);
+      storage.write('cfg', state.cfg);
+      state.dirty = true;
+      render();
+    });
+    /* Ориентация: вращение сцены мышью */
+    const scene = $('#atScene');
+    let dragging = false, lastX = 0, lastY = 0;
+    scene.addEventListener('pointerdown', event => {
+      dragging = true; lastX = event.clientX; lastY = event.clientY;
+      scene.setPointerCapture(event.pointerId);
+    });
+    scene.addEventListener('pointermove', event => {
+      if (!dragging) return;
+      V.view.azimuth += (event.clientX - lastX) * 0.008;
+      V.view.elevation = Math.max(-1.35, Math.min(1.35, V.view.elevation + (event.clientY - lastY) * 0.008));
+      lastX = event.clientX; lastY = event.clientY;
+      state.dirty = true;
+      render();
+    });
+    scene.addEventListener('pointerup', event => { dragging = false; scene.releasePointerCapture(event.pointerId); });
+    scene.addEventListener('dblclick', () => { V.home(); state.dirty = true; render(); });
+    scene.addEventListener('wheel', event => {
+      event.preventDefault();
+      V.view.distance = Math.max(3.6, Math.min(16, V.view.distance + event.deltaY * 0.006));
+      state.dirty = true;
+      render();
+    }, { passive: false });
+    $('#atViewReset').addEventListener('click', () => { V.home(); state.dirty = true; render(); });
+    /* Команды */
+    $('#cmForm').addEventListener('submit', submitCommand);
+    $('#cmCmd').addEventListener('change', () => {
+      const spec = COMMANDS.find(item => item.code === $('#cmCmd').value);
+      $('#cmParam').disabled = !spec.arg;
+      $('#cmParamHint').textContent = spec.arg ? spec.arg.hint : 'Аргумент не требуется.';
+      $('#cmError').hidden = true;
+      if (!spec.arg) $('#cmParam').value = '';
+    });
+    $('#cmClear').addEventListener('click', () => {
+      state.queue = [];
+      renderQueue();
+    });
+    $('#cmProbe').addEventListener('click', () => probeCommandChannel(false));
+    /* Журнал */
+    $('#jrLevel').addEventListener('change', renderJournal);
+    $('#jrOnlyBad').addEventListener('change', renderJournal);
+    $('#jrSearch').addEventListener('input', renderJournal);
+    $('#jrExportCsv').addEventListener('click', exportLog);
+    $('#jrExportReport').addEventListener('click', exportReport);
+    $('#jrImport').addEventListener('click', () => $('#jrFile').click());
+    $('#jrFile').addEventListener('change', async event => {
+      const file = event.target.files[0];
+      if (file) startReplay(await file.text(), file.name);
+      event.target.value = '';
+    });
+    $('#jrResumeSession').addEventListener('click', () => {
+      if (state.savedSession) startReplay(state.savedSession.join('\n'), 'прошлый сеанс');
+    });
+    $('#jrToLive').addEventListener('click', backToLive);
+    $('#jrReplayToggle').addEventListener('click', () => {
+      state.replay.playing = !state.replay.playing;
+      renderJournal();
+    });
+    $('#jrReplaySpeed').addEventListener('change', () => {
+      state.replay.speed = Number($('#jrReplaySpeed').value);
+      renderJournal();
+    });
+    /* Настройки */
+    $('#setSave').addEventListener('click', saveSettings);
+    $('#setThresholds').addEventListener('change', () => {
+      state.cfg.thresholds = Number($('#setThresholds').value); state.dirty = true; render();
+    });
+    $('#setAnimate').addEventListener('change', () => {
+      state.cfg.animate = Number($('#setAnimate').value); applyTheme(); render();
+    });
+    $('#setTheme').addEventListener('change', () => {
+      state.cfg.theme = $('#setTheme').value; applyTheme(); storage.write('cfg', state.cfg); render();
+    });
+    $('#setCheck').addEventListener('click', checkConnection);
+    $('#setReset').addEventListener('click', () => {
+      state.cfg = Object.assign({}, DEFAULT_CFG);
+      storage.write('cfg', state.cfg);
+      applyTheme();
+      fillSettings();
+      log(0, 'Настройки сброшены к значениям по умолчанию');
+      render();
+    });
+    $('#setExport').addEventListener('click', () => {
+      download('cup-settings-' + stamp() + '.json', JSON.stringify(state.cfg, null, 2), 'application/json');
+      log(0, 'Настройки выгружены');
+    });
+    $('#setImport').addEventListener('click', () => $('#setFile').click());
+    $('#setFile').addEventListener('change', async event => {
+      const file = event.target.files[0];
+      if (!file) return;
+      try {
+        const data = JSON.parse(await file.text());
+        state.cfg = Object.assign({}, DEFAULT_CFG, data);
+        storage.write('cfg', state.cfg);
+        applyTheme();
+        fillSettings();
+        log(0, 'Настройки загружены из файла ' + file.name);
+      } catch (error) {
+        log(2, 'Не удалось прочитать настройки: ' + file.name);
+      }
+      event.target.value = '';
+      render();
+    });
+    $('#setPurge').addEventListener('click', () => {
+      storage.drop('log');
+      storage.drop('cfg');
+      state.savedSession = null;
+      state.stream.reset();
+      state.frame = null;
+      state.lastRaw = '';
+      state.events = [];
+      log(1, 'Журнал, сеанс и настройки удалены из браузера');
+      fillSettings();
+      render();
+    });
+    /* Перерисовка при изменении размера окна и темы */
+    let resizeTimer = 0;
+    window.addEventListener('resize', () => {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => { state.dirty = true; render(); }, 120);
+    });
+    if (window.matchMedia) {
+      const scheme = window.matchMedia('(prefers-color-scheme: dark)');
+      scheme.addEventListener('change', () => { state.dirty = true; render(); });
+    }
+    /* Горячие клавиши оператора */
+    document.addEventListener('keydown', event => {
+      const target = event.target;
+      if (target instanceof Element && target.closest('input, select, textarea, [contenteditable]')) return;
+      if (event.metaKey || event.ctrlKey || event.altKey) return;
+      const views = ['overview', 'telemetry', 'attitude', 'commands', 'journal', 'settings'];
+      if (event.key >= '1' && event.key <= '6') { showView(views[Number(event.key) - 1]); return; }
+      const key = event.key.toLowerCase();
+      if (key === 'p' || key === 'з') { $('#btnFreeze').click(); return; }
+      if (key === '?' || event.key === 'F1') { $('#helpSheet').showModal(); return; }
+      if (key === 'g' || key === 'п') {
+        const index = T.CHART_GROUPS.findIndex(group => group.key === state.chartGroup);
+        state.chartGroup = T.CHART_GROUPS[(index + 1) % T.CHART_GROUPS.length].key;
+        buildGroupTabs();
+        state.dirty = true;
+        showView('telemetry');
+        return;
+      }
+      if (key === 'l' || key === 'д') {
+        const group = T.CHART_GROUPS.find(item => item.key === state.chartGroup);
+        const allHidden = group.series.every(item => state.hiddenSeries[group.key + item.label]);
+        for (const item of group.series) {
+          state.hiddenSeries[group.key + item.label] = !allHidden;
+        }
+        state.dirty = true;
+        render();
+      }
+    });
+  }
+  /* ── 13. Проверка соединения и автосохранение ───────────────────────────*/
+  async function checkConnection() {
+    const target = $('#setCheckResult');
+    target.textContent = 'проверка…';
+    target.dataset.level = '1';
+    const started = performance.now();
+    try {
+      const response = await fetch(state.cfg.url, { cache: 'no-store', mode: 'cors' });
+      const elapsed = Math.round(performance.now() - started);
+      if (response.status === 204) {
+        target.dataset.level = '1';
+        target.textContent = 'HTTP 204 · эмулятор запущен, данных пока нет · ' + elapsed + ' мс';
+      } else if (response.ok) {
+        const text = (await response.text()).trim();
+        target.dataset.level = '0';
+        target.textContent = 'HTTP 200 · ' + elapsed + ' мс · ' + (text.length > 40 ? text.slice(0, 40) + '…' : text);
+      } else {
+        target.dataset.level = '2';
+        target.textContent = 'HTTP ' + response.status + ' · проверьте адрес и постамбулу';
+      }
+    } catch (error) {
+      target.dataset.level = '2';
+      target.textContent = 'Нет ответа · запустите python emulator.py';
+    }
+  }
+  /* Журнал переживает перезагрузку страницы: без этого требование
+     «сохранять лог и просматривать его позже» не выполняется.        */
+  function autosave() {
+    if (state.mode !== 'live' || !state.stream.frames.length) return;
+    const lines = state.stream.frames.slice(-2500).map(frame => frame.raw);
+    if (storage.write('log', lines)) state.savedSession = lines;
+  }
+  /* ── 14. Запуск ─────────────────────────────────────────────────────────*/
+  function init() {
+    applyTheme();
+    buildGroupTabs();
+    buildAttitudeLegend();
+    $('#cmCmd').innerHTML = COMMANDS.map(item =>
+      '<option value="' + item.code + '">' + item.code + ' — ' + item.name + '</option>').join('');
+    $('#cmCmd').dispatchEvent(new Event('change'));
+    $('#tlWindow').value = String(state.cfg.windowSec);
+    fillSettings();
+    bindEvents();
+    renderChannel();
+    $('#footProto').textContent = T.PACKET_SIZE + ' полей, разделитель «;»';
+    log(0, 'Пульт запущен. Источник данных: ' + state.cfg.url);
+    if (state.savedSession) log(0, 'Найден прошлый сеанс: ' + state.savedSession.length + ' пакетов');
+    setInterval(replayTick, 100);
+    setInterval(render, 250);
+    setInterval(autosave, 5000);
+    pollLoop();
+    render();
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+  else init();
+})();
+</script>
+<details class="sheet__readme" id="readme">
+  <summary>Документация · README.md</summary>
+  <pre class="raw"># Пульт оператора ЦУП · «ИнтроСат»
+
+Прототип рабочего места оператора центра управления полётами учебного спутника
+«ИнтроСат». Принимает телеметрию, показывает состояние модулей, ведёт журнал
+и позволяет просматривать записи сеансов.
+
+Проект — статический: чистые HTML, CSS и JavaScript, без сборки, фреймворков и
+сторонних библиотек.
+
+---
+
+## 1. Быстрый старт
+
+```text
+1. Запустить эмулятор телеметрии (раздел 2).
+2. Открыть index.html в браузере.
+3. В шапке должно появиться «Приём телеметрии».
+```
+
+Если вместо этого горит аварийная полоса «Эмулятор недоступен», значит сервер
+не запущен или указан неверный адрес — проверьте его на экране «06 Настройки»
+(поле «Адрес эмулятора», кнопка «Проверить соединение»).
+
+### Особенности запуска
+
+| Ситуация | Что делать |
+| --- | --- |
+| Chrome, Edge, Firefox, любой компьютер | открыть `index.html` двойным щелчком — работает |
+| Safari, планшет, телефон | положить папку на компьютер с эмулятором и подключиться к его адресу (раздел 3) |
+
+Safari запрещает запросы к `http://` со страниц, открытых по `file://`, поэтому
+для него и для мобильных устройств нужен вариант из раздела 3.
+
+---
+
+## 2. Источник данных: эмулятор телеметрии
+
+Эмулятор — обязательная часть задания
+([mcc-hack/data-emulator](https://github.com/mcc-hack/data-emulator)). Он нужен
+и в файловом режиме (демонстрация без конструктора), и при подключении реального
+спутника.
+
+```bash
+# 1. Получить эмулятор
+git clone https://github.com/mcc-hack/data-emulator
+
+# 2. Запустить (Python 3.10+; в файловом режиме зависимостей нет)
+cd data-emulator
+python emulator.py
+#   → выберите номер файла с данными
+#   → дождитесь: «Адрес: http://127.0.0.1:8765/telemetry»
+```
+
+Полезные ключи:
+
+```bash
+python emulator.py --list-files                        # список файлов телеметрии
+python emulator.py --file 01_normal_flight.csv         # сразу без меню
+python emulator.py --file 01_normal_flight.csv --interval 0.05   # чаще кадры
+python emulator.py --file 02_sensor_faults.csv        # отказы датчиков
+python emulator.py --file 03_radio_noise.csv           # повреждения в эфире
+```
+
+Реальный конструктор читается так же, меняется только источник:
+
+```bash
+python -m pip install -r requirements.txt
+python emulator.py --source serial --port COM3 --baudrate 115200
+```
+
+Код пульта при этом не меняется: он обращается к тому же адресу.
+
+### Важная особенность эмулятора
+
+`GET /telemetry` возвращает **только последний** кадр, а не поток. Поэтому между
+двумя полученными пакетами счётчик «Время МК» может вырасти на несколько, и часть
+кадров физически не доходит до пульта. Это не дефект приёмника: пульт считает
+пропуски по счётчику МК и показывает их отдельной строкой «Пропущено по счётчику
+МК» вместе с «Полнотой потока». Если полнота падает ниже 90 %, пульт сам
+уменьшает интервал опроса (минимальный — 40 мс) и пишет об этом событие в журнал.
+
+При очень быстром эмуляторе (`--interval 0.05` и меньше) поток теряется
+неизбежно: счётчик и время прихода кадров в этом случае просто не совпадают.
+
+---
+
+## 3. Запуск с телефона или планшета
+
+Пульт — обычные статические файлы, поэтому его достаточно отдать по сети:
+
+```bash
+cd cup-hack
+python -m http.server 8000
+```
+
+На устройстве в той же сети откройте `http://&lt;адрес компьютера&gt;:8000` и в
+настройках пульта укажите адрес эмулятора, например
+`http://192.168.0.15:8765/telemetry`.
+
+---
+
+## 4. Что умеет пульт
+
+Пять экранов слева (клавиши `1`…`5` переключают их, `6` — настройки):
+
+### 01 Обзор
+
+* **Состояние модулей** — пять модулей комплекта: микроконтроллер STM32, датчик
+  положения (гироскоп + акселерометр + магнитометр), четыре датчика освещённости,
+  модуль питания, плата маховика. У каждого — показание, уровень состояния и
+  текст причины.
+* **Напряжение питания** — график с рабочим диапазоном и границами аварии.
+* **Поток данных** — частота обновления, задержка опроса, пропущенные пакеты,
+  полнота потока, ошибки опроса.
+* **Текущий пакет** — сырая строка целиком, как её отдал эмулятор.
+
+### 02 Телеметрия
+
+* **Динамика параметров** — шесть групп (батарея, маховик, освещённость,
+  акселерометр, гироскоп, магнитометр). Окно 2/5/15 минут. Ряды можно
+  скрывать щелчком по легенде — на графике одновременно четыре оси читаются
+  хуже, чем одна-две.
+* **Показания датчиков** — все 16 полей: значение из пакета, физическая величина
+  с единицей измерения и признак достоверности.
+* **Целостность полей** — карта «поле × последние 64 пакета». Повреждённое поле
+  видно точечно: по пакету в журнале видно только «пакет плохой», здесь видно,
+  какой именно датчик молчит.
+* **Причины отклонений** — что и сколько раз ломалось за сеанс.
+
+### 03 Ориентация
+
+* **Положение спутника** — трёхмерная модель: корпус и две солнечные панели,
+  опорная СК (прописные X Y Z) и связанная СК (строчные x y z), плоскость
+  экватора и след движения нормали панелей. Сцену можно вращать мышью, колесо —
+  масштаб, двойной щелчок — исходный вид.
+* **Углы ориентации** — крен, тангаж, курс.
+* **Угловые скорости** и **магнитное поле** — модули и компоненты.
+
+### 04 Команды
+
+Форма команды с проверкой аргумента, очередь передачи с состоянием каждой
+команды, журнал команд и состояние канала передачи.
+
+### 05 Журнал
+
+Лента событий с фильтром по уровню, журнал пакетов с поиском и фильтром
+«только отклонённые», отчёт о сеансе, работа с записью: открыть лог из файла,
+продолжить прошлый сеанс, воспроизведение с темпом ×0,25…×16 и без пауз.
+
+---
+
+## 5. Протокол пакета
+
+18 полей, разделитель `;`:
+
+```text
+ПРЕАМБУЛА;ВРЕМЯ ОТ ЗАПУСКА МК;АКБ;СД1;СД2;СД3;СД4;AX;AY;AZ;GX;GY;GZ;MX;MY;MZ;МАХОВИК;ПОСТАМБУЛА
+AA55         ;1204               ;8420;…                    ;…                             ;0D0A
+```
+
+| Поле | Единицы | Преобразование | Допуск |
+| --- | --- | --- | --- |
+| `ВРЕМЯ ОТ ЗАПУСКА МК` | с | как есть | неотрицательное целое |
+| `АКБ` | В | ÷ 1000 | 0…65535 мВ, правдоподобно 2…20 В |
+| `СД1`…`СД4` | усл. ед. | как есть | 0…65536, насыщение от 65530 |
+| `AX`, `AY`, `AZ` | g | ÷ 16384 | ±32768, насыщение от 32700 |
+| `GX`, `GY`, `GZ` | °/с | ÷ 131,072 | ±32768, насыщение от 32700 |
+| `MX`, `MY`, `MZ` | Гс | ÷ 1711,6 | ±32768, насыщение от 32700 |
+| `МАХОВИК` | усл. ед. | как есть, знак задаёт направление | ±32768 |
+
+Правила разбора (`js/telemetry.js`):
+
+* преамбула и постамбула сверяются с настройками — в файле с помехами они
+  повреждаются первыми;
+* число полей должно быть ровно 18;
+* `OFF` означает физически отключённый датчик: пакет остаётся пригодным,
+  модуль уходит в аварию «нет связи» — это не то же самое, что сбой канала;
+* любое другое нечисловое значение (`NaN`, `?`, `CRC_ERROR`, пустая строка)
+  считается повреждением поля;
+* больше трёх повреждённых полей — пакет отбрасывается как хаотичный;
+* повреждённое время пакета отбрасывает пакет целиком: без времени его нельзя
+  положить на шкалу.
+
+---
+
+## 6. Нештатные ситуации
+
+### Как увидеть их за сорок секунд
+
+Это важно знать до защиты. Файлы из репозитория устроены так:
+
+| Файл | Первая нештатная ситуация | Через |
+| --- | --- | --- |
+| `01_normal_flight.csv` | нет ни одной на 100 000 кадров | — |
+| `02_sensor_faults.csv` | кадр 10 000, МК 10 000 (`АКБ` → `OFF`) | **16 мин 40 с** |
+| `03_radio_noise.csv` | кадр 143, МК 143 (постамбула `0D00`) | 14 с |
+
+Если запустить `02_sensor_faults.csv` и смотреть три минуты, экран будет
+полностью зелёным — и это не дефект приложения, а расположение данных.
+
+**Надёжный путь — воспроизведение в самом пульте.** Экран «05 Журнал» →
+«Открыть лог из файла» → выбрать `02_sensor_faults.csv` прямо из папки
+эмулятора → темп ×16 или «без пауз». Файл разбирается тем же кодом, что и
+живой поток, но приходит построчно, поэтому:
+
+* первый отказ появляется через ~40 секунд вместо 16 минут;
+* «Полнота потока» показывает 100 %, потому что ничего не теряется;
+* файл принимается в исходном виде эмулятора — править его не нужно.
+
+Это заодно демонстрирует требование п. 6 ТЗ: журнал сохранён, сохранённый
+журнал открыт и проигран заново.
+
+**Путь через эмулятор** — если нужна именно живая передача. Обрежьте файл
+так, чтобы начать за пару сотен кадров до первого отказа:
+
+```bash
+python -c &quot;p=&#x27;data/02_sensor_faults.csv&#x27;;l=open(p,encoding=&#x27;utf-8&#x27;).read().splitlines();open(&#x27;02_demo.csv&#x27;,&#x27;w&#x27;,encoding=&#x27;utf-8&#x27;).write(&#x27;
+&#x27;.join([l[0]]+l[9900:16000])+&#x27;
+&#x27;)&quot;
+python emulator.py --file 02_demo.csv
+```
+
+Теперь `АКБ` отключается через 10 секунд, `СД1` — через 4 минуты, и так далее.
+Порядок отключений в файле: `АКБ` → `СД1` → `СД2` → `СД3` → `СД4` →
+акселерометр → гироскоп → магнитометр → маховик, примерно по 244 секунды на
+каждый. Дальше идут насыщения измерителей (МК 44 223 и далее) и мусорные
+значения вместо чисел (МК 54 000).
+
+Оговорка: чем быстрее эмулятор, тем ниже полнота потока — при `--interval 0.05`
+пульт физически не успевает опрашивать чаще, чем меняются кадры. Это свойство
+эмулятора, а не приёмника, и честно видно в показателях.
+
+### Как пульт на это реагирует
+
+| Ситуация | Поведение пульта |
+| --- | --- |
+| Эмулятор не запущен | аварийная полоса с командой запуска, опрос замедляется до 1 с, счётчик ошибок растёт |
+| Эмулятор запущен, данных ещё нет (HTTP 204) | состояние «Ожидание данных», аварии нет |
+| Передача остановилась | после настраиваемого интервала все модули получают статус «показания устарели» |
+| Датчик помечен `OFF` | авария модуля, в карте целостности строка окрашивается, график показывает разрыв |
+| Повреждено значение поля | внимание, пакет учитывается как «с замечаниями», точное поле видно в карте |
+| Повреждена преамбула или постамбула | пакет отклоняется, причина попадает в список причин |
+| Счётчик МК откатился назад | событие в журнале; три отката подряд трактуются как перезапуск МК |
+| Счётчик МК перескочил вперёд | засчитывается пропуск, полнота потока падает |
+| Эмулятор перезапустился и начал файл заново | тот же откат счётчика — событие, ложного «перезапуска МК» не возникает |
+
+---
+
+## 7. Передача команд
+
+Эмулятор телеметрии — приёмник: он реализует только `GET /telemetry`, а на любой
+другой путь отвечает 404. Изображать передачу команд было бы враньём, поэтому
+пульт при первой отправке делает один запрос к адресу команды
+(`http://127.0.0.1:8765/command`) и сообщает результат:
+
+* канал недоступен или ответили отказом → команды выполняются **в локальной
+  модели** с пометкой «Выполнена локально: эмулятор не принимает команды»;
+* на `WHEEL_SET` дополнительно показывается ожидаемый результат — например
+  «ожидаемая скорость маховика −12000 (сейчас 26465)», чтобы оператор видел
+  последствие, а не только галочку;
+* если канал передачи отвечает и доступен, команда уходит настоящим `POST`,
+  а её состояние берётся из кода ответа;
+* при аварии канала команда не помечается выполненной.
+
+---
+
+## 8. Настройки
+
+Экран «06 Настройки»: адрес эмулятора, интервал опроса, время потери связи,
+преамбула и постамбула, пороги напряжения (по умолчанию 7,2–8,5 В — рабочий
+диапазон, 6,6 и 8,7 В — авария), тема оформления, пороги на графике, мигание
+аварии. Настройки, журнал и прошлый сеанс хранятся в браузере
+(`localStorage`) и выгружаются в JSON одним файлом.
+
+Горячие клавиши: `1`…`6` — экраны, `P` — заморозить приём, `G` — следующая группа
+графика, `L` — показать или скрыть все ряды, `?` — справка.
+
+---
+
+## 9. Устройство проекта
+
+```text
+cup-hack/
+├── index.html        разметка всех экранов, без служебной логики
+├── css/app.css       дизайн-система и вёрстка, один файл
+└── js/
+    ├── telemetry.js  протокол: разбор пакета, допуски, единицы измерения
+    ├── analysis.js   состояние модулей, статистика потока, отчёт о сеансе
+    ├── views.js      отрисовка на canvas: графики, карта полей, 3D-сцена
+    └── app.js        состояние, опрос эмулятора, команды, журнал, настройки
+```
+
+Модули связаны одним временем: `telemetry` ничего не знает о модулях и DOM,
+`analysis` — о браузере, `views` — о состоянии. `app.js` читает их результаты и
+обновляет интерфейс. Благодаря этому разбор пакета проверяется без браузера, а
+отрисовка — без эмулятора.
+
+Поток данных:
+
+```text
+эмулятор ──GET /telemetry──▶ poll() ──▶ ingest() ──▶ Stream ──▶ отрисовка
+                                  │
+                                  └── кадр последний, пропуски считаются
+                                      по счётчику МК
+```
+
+Ключевые решения:
+
+* **Ключевые решения:**
+
+* **Отрисовка по требованию.** Тяжёлые полотна перерисовываются только при новых
+  данных, а не в цикле 4 Гц: счётчики обновляются всегда, графики — когда есть
+  что рисовать.
+* **История ограничена, счётчики — нет.** Пульт хранит последние 20 000 пакетов
+  и 5 000 записей журнала: измеренная цена одного кадра — 1111 байт, то есть
+  38 МБ в час при 10 Гц, а длинный сеанс без ограничения съедал бы сотни
+  мегабайт. 20 000 кадров — это 33 минуты при 10 Гц, с запасом перекрывающие
+  самое длинное окно графика. Итоги сеанса при этом полные: счётчики
+  накопительные, окно графика ищется делением пополам, а не перебором.
+* **Никакого сглаживания.** Пропуск данных на графике остаётся разрывом линии:
+  интерполяция создала бы значения, которых не было.
+* **Цвет дублируется формой.** Уровень состояния кодируется не только цветом, но
+  и формой глифа (круг, треугольник, квадрат) и подписью — иначе индикатор
+  нечитаем при нарушениях цветовосприятия.
+* **Устаревшие данные не выдаются за свежие.** При потере связи показания
+  остаются на экране, но получают пометку «показания устарели».
+
+---
+
+## 10. Что проверено
+
+Пульт запускался против эмулятора с файлами `01_normal_flight.csv`,
+`02_sensor_faults.csv` и `03_radio_noise.csv` из репозитория задания:
+
+* приём на частоте 9,6 Гц при интервале кадров 0,1 с, задержка запроса 6–16 мс,
+  полнота потока 95…99 %;
+* отказы датчиков (`OFF`) — авария нужного модуля, а не всего аппарата;
+* повреждения в эфире — раздельная обработка преамбулы, постамбулы, значений и
+  времени пакета;
+* недоступный эмулятор, HTTP 204, остановка передачи, заморозка приёма,
+  воспроизведение записи, отправка команд с неверным и верным аргументом;
+* раскладка 1440 px (две колонки), 1000 px и 390 px (одна колонка, таблица
+  модулей перестраивается в список), светлая и тёмная темы;
+* нагрузка на память: 60 000 принятых пакетов подряд оставляют в истории
+  ровно 20 000 кадров и 5 000 записей журнала при полных счётчиках сеанса,
+  выборка окна графика занимает 0,02 мс;
+* полоса тревоги не переписывается, пока сообщение не изменилось, — иначе
+  скринридер повторял бы одну и ту же аварию каждые 250 мс.
+
+---
+
+## 11. Ограничения
+
+Честно о том, чего приложение не делает:
+
+* **Ориентация оценивается мгновенно**, триадизацией по акселерометру и
+  магнитометру, без гироскопической интеграции. Это демонстрационный расчёт: на
+  орбите он шумный, для настоящего решения нужна фильтрация Калмана и
+  интеграция по гироскопу с коррекцией по магнитометру.
+* **Часть пакетов теряется при большой частоте кадров** — ограничение эмулятора,
+  а не пульта; полнота потока измеряется и показывается честно.
+* **Глубина истории ограничена** 20 000 пакетами: журнал и выгрузка содержат
+  последние 20 000 пакетов, а не весь сеанс. Счётчики и отчёт при этом
+  накопительные. Для длинного сеанса выгружайте журнал частями.
+* **Автотестов нет.** Проверка разбора сделана вручную на всех трёх файлах
+  эмулятора; отдельного набора тестов в проекте нет.
+* **Команды в файловом режиме не доходят до борта**: у эмулятора нет приёмника
+  команд (раздел 7).
+* **Данные никуда не отправляются** — журнал и настройки лежат в `localStorage`
+  браузера, очищаются кнопкой в настройках.
+
+---
+
+## 12. Соответствие регламенту
+
+| Требование ТЗ (Приложение №1) | Где выполнено |
+| --- | --- |
+| 3.1 вывод телеметрии и статусы модулей | экран 01, таблица модулей |
+| 3.1 графики изменения параметров | экран 02, шесть групп + напряжение на экране 01 |
+| 3.1 3D-положение в реальном времени | экран 03 (необязательный пункт) |
+| 3.1 источник — эмулятор телеметрии | раздел 2, `GET /telemetry` |
+| 3.2 запуск на Windows / Linux / macOS | статические файлы, ничего собирать не нужно |
+| 3.2 исходный код и инструкция запуска | этот документ |
+| 3.2 корректная работа с форматом эмулятора | раздел 5, `js/telemetry.js` |
+| 3.2 читаемый код, документация к методам | комментарии в каждом модуле, карта модулей в разделе 9 |
+| 4 совместимость с комплектом «ИнтроСат» | пять модулей из перечня задания |
+| 5 интерфейсы Bluetooth / WiFi / IP / UART | IP: пульт обращается к сетевому адресу, адрес настраивается |
+| 6 сохранение лога и просмотр позже | журнал в браузере, экспорт CSV, воспроизведение записи |
+| 7.1 интерфейс для оператора ЦУП | шесть экранов, один экран — одна задача |
+| 7.2 группировка по модулям | таблица модулей и карта целостности по полям |
+| 7.2 ошибки заметны: жёлтый, красный, анимация | полоса тревоги, мигающий глиф аварии |
+| 7.3 график напряжения во времени | экран 01 |
+| 7.4 зелёный / жёлтый / красный индикаторы | уровни 0/1/2 во всех индикаторах |
+| 7.5 крупные шрифты, понятные подписи | 15 px основной текст, моноширинные числа 18 px в шапке |
+
+| Критерий оценивания (Приложение №2) | Что сделано |
+| --- | --- |
+| Приём и отображение телеметрии, 25 | разбор пакета с допусками, измерение полноты потока, автоподбор частоты опроса |
+| Работа в нештатных ситуациях, 15 | отказ датчика, повреждение полей, откат счётчика, потеря связи, недоступный эмулятор, заморозка |
+| Представление информации оператору, 15 | тревога верхнего уровня, статус модуля с причиной, карта целостности, управляемые ряды |
+| Управляющие команды и логирование, 15 | очередь с проверкой аргумента, проба канала, экспорт лога и отчёта, воспроизведение записи |
+| Документация, 5 | README, комментарии, карта модулей |
+| Дополнительные инженерные решения, 25 | оценка полноты потока, карта целостности полей, отчёт о сеансе, воспроизведение с темпом, автоподбор интервала опроса, проверка целостности пакета |
+
+---
+
+## 13. Требования к окружению
+
+* Браузер с поддержкой `fetch`, `dialog` и canvas: Chrome, Edge, Firefox, Safari
+  15.4+.
+* Python 3.10+ — только для эмулятора.
+* Для работы с реальным конструктором по COM-порту: `pip install -r requirements.txt`
+  в папке эмулятора.
+
+Зависимостей у самого пульта нет.
+</pre>
+</details>
+</body>
+</html>

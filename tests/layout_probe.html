@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Проверка раскладки на заданной ширине</title>
+<style>
+  html, body { margin: 0; padding: 0; background: #333; }
+  /* Полотно фиксированной ширины: медиазапросы внутри кадра считаются
+     от его ширины, поэтому раскладку можно проверить на любом экране. */
+  iframe { display: block; border: 0; height: 1400px; }
+</style>
+</head>
+<body>
+  <iframe id="frame" src="../index.html" title="Пульт"></iframe>
+  <script>
+  'use strict';
+  /* Запуск: loadLayout(width, mode) → Promise<отчёт>. */
+  window.loadLayout = function (width, mode) {
+    const frame = document.getElementById('frame');
+    frame.style.width = width + 'px';
+    return new Promise(function (resolve) {
+      const onReady = function () {
+        const w = frame.contentWindow, d = frame.contentDocument;
+        /* Ждём, пока приложение смонтируется и отрисует хотя бы раз */
+        const timer = setInterval(function () {
+          const doc = frame.contentDocument;
+          if (!doc || !doc.querySelector('#instrBlock')) return;
+          const sel = doc.querySelector('#setInstruments');
+          if (sel) {
+            sel.value = mode;
+            sel.dispatchEvent(new w.Event('change', { bubbles: true }));
+          }
+          clearInterval(timer);
+          setTimeout(function () { resolve(measure(frame, width, mode)); }, 700);
+        }, 120);
+      };
+      frame.addEventListener('load', onReady, { once: true });
+      frame.src = '../index.html?r=' + Math.random();
+    });
+  };
+
+  function measure(frame, width, mode) {
+    const d = frame.contentDocument;
+    const box = sel => {
+      const el = d.querySelector(sel);
+      if (!el) return null;
+      const b = el.getBoundingClientRect();
+      return {
+        x: Math.round(b.x), y: Math.round(b.y),
+        w: Math.round(b.width), h: Math.round(b.height),
+      };
+    };
+    const shown = sel => {
+      const el = d.querySelector(sel);
+      return !!el && getComputedStyle(el).display !== 'none';
+    };
+    const main = box('#view-overview .col--main');
+    const aside = box('#view-overview .col--aside');
+    const instr = box('#instrBlock');
+    const rail = box('.rail');
+
+    /* Перекрытие колонок — верный признак того, что сетка не уложилась */
+    const overlap = (a, b) => {
+      if (!a || !b) return 0;
+      const w = Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x);
+      const h = Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y);
+      return w > 0 && h > 0 ? Math.round(w) : 0;
+    };
+    /* Выход за пределы окна по горизонтали */
+    const overflowX = Math.max(0, Math.round(d.documentElement.scrollWidth - width));
+
+    return {
+      width: width,
+      mode: mode,
+      instrParent: d.querySelector('#instrBlock').parentElement.id,
+      railVisible: shown('.rail'),
+      instrColumnVisible: shown('#view-overview .col--instr'),
+      main: main, aside: aside, instr: instr, rail: rail,
+      overlapInstrMain: overlap(instr, main),
+      overlapInstrAside: overlap(instr, aside),
+      overflowX: overflowX,
+      moduleRows: d.querySelectorAll('#ovModules tr').length,
+      canvasW: (d.querySelector('#ovVoltChart') || {}).width || 0,
+      verdict: (d.querySelector('#verdictWord') || {}).textContent || '',
+    };
+  }
+  </script>
+</body>
+</html>

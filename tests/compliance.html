@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Проверка на файлах эмулятора</title>
+</head>
+<body>
+<!--
+   Проверка соответствия техническому заданию на официальных файлах
+   эмулятора mcc-hack/data-emulator: весь файл целиком проходит через
+   разбор без интерфейса, а выборка — через настоящий пульт.
+
+   Файлы берутся по символическим ссылкам в tests/data/.
+-->
+<script src="../js/telemetry.js"></script>
+<script src="../js/analysis.js"></script>
+<script>
+'use strict';
+
+const T = window.CU.Telemetry;
+const A = window.CU.Analysis;
+
+const CFG = {
+  pre: 'AA55', post: '0D0A', chaosLimit: 3,
+  vwLo: 7.2, vwHi: 8.5, vcLo: 6.6, vcHi: 8.7,
+};
+
+const findings = [];
+function bad(kind, detail) { findings.push(kind + ' :: ' + detail); }
+
+/**
+ * Прогоняет весь файл через разбор и оценку модулей.
+ * @param {string} text содержимое CSV
+ * @param {string} label имя файла для отчёта
+ */
+function runFile(text, label) {
+  const lines = text.split(/\r?\n/);
+  const stream = new A.Stream();
+  const ctx = { cfg: CFG, stale: false, rebooted: false };
+  let header = lines[0] && /ПРЕАМБУЛА/i.test(lines[0]);
+  if (header) lines.shift();
+
+  const byReason = new Map();
+  const moduleHits = new Map();
+  let empty = 0;
+
+  for (let i = 0; i < lines.length; i++) {
+    const raw = lines[i];
+    if (!raw.trim()) { empty++; continue; }
+
+    let frame;
+    try {
+      frame = T.parse(raw, CFG);
+      T.derive(frame);
+    } catch (error) {
+      bad('ИСКЛЮЧЕНИЕ', label + ' строка ' + (i + 1) + ': ' + error.message);
+      continue;
+    }
+
+    /* Формат эмулятора: ровно 18 полей, преамбула и постамбула на месте.
+       Любое отклонение здесь — не «нештатная ситуация», а несовместимость. */
+    if (frame.reasonKey === 'fields') {
+      bad('ФОРМАТ', label + ' строка ' + (i + 1) + ': ' + frame.reason);
+    }
+    if (frame.reasonKey === 'preamble' || frame.reasonKey === 'postamble') {
+      byReason.set(frame.reasonKey, (byReason.get(frame.reasonKey) || 0) + 1);
+    }
+    if (frame.reasonKey) byReason.set(frame.reasonKey, (byReason.get(frame.reasonKey) || 0) + 1);
+
+    const before = stream.accepted;
+    stream.record(frame, Date.now());
+    if (stream.accepted > before) {
+      /* Считаем, какие модули уходили в ненулевой уровень */
+      for (const m of A.modules(frame, ctx)) {
+        if (m.level > 0) moduleHits.set(m.name, (moduleHits.get(m.name) || 0) + 1);
+      }
+    }
+  }
+
+  const s = stream.summary();
+
+  /* Полнота потока: эмулятор отдаёт кадры подряд, пульт их все видит */
+  if (s.completeness !== null && s.completeness < 99) {
+    bad('ПОЛНОТА', label + ': ' + s.completeness.toFixed(2) + ' %');
+  }
+  /* Счётчики обязаны сходиться */
+  if (s.accepted + s.rejected !== stream.accepted + stream.rejected) {
+    bad('СЧЁТЧИКИ', label + ': сводка не сходится');
+  }
+
+  return {
+    label,
+    headerSkipped: header,
+    lines: lines.length,
+    emptyLines: empty,
+    accepted: s.accepted,
+    rejected: s.rejected,
+    defective: s.defective,
+    lost: s.lost,
+    completeness: s.completeness === null ? null : +s.completeness.toFixed(2),
+    reasons: Array.from(byReason.entries())
+      .sort((a, b) => b[1] - a[1])
+      .map(([k, v]) => k + '=' + v),
+    modulesWithIssues: Array.from(moduleHits.entries())
+      .sort((a, b) => b[1] - a[1])
+      .map(([k, v]) => k + '=' + v),
+  };
+}
+
+/* Файлы обрабатываются по одному: сто тысяч строк разбора занимают
+   несколько секунд, а инструмент наблюдения отдаёт результат максимум
+   раз в минуту — весь комплект за один вызов не укладывается.     */
+async function runOne(name) {
+  findings.length = 0;
+  const response = await fetch('data/' + name + '.csv', { cache: 'no-store' });
+  if (!response.ok) { bad('ФАЙЛ', name + ': HTTP ' + response.status); return { name, error: response.status }; }
+  const text = await response.text();
+  const report = runFile(text, name);
+  report.findings = findings.slice();
+  return report;
+}
+
+async function runCompliance() {
+  const reports = [];
+  for (const name of ['01_normal_flight', '02_sensor_faults', '03_radio_noise']) {
+    reports.push(await runOne(name));
+  }
+  const all = reports.flatMap(r => r.findings || []);
+  return { reports, findings: all, ok: all.length === 0 };
+}
+
+window.runOne = runOne;
+window.runCompliance = runCompliance;
+</script>
+</body>
+</html>

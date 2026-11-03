@@ -1,0 +1,464 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Фаззинг интерфейса пульта</title>
+<style>body{margin:0;font:13px system-ui}iframe{width:1280px;height:900px;border:0}</style>
+</head>
+<body>
+<iframe id="app" src="../index.html"></iframe>
+<script>
+'use strict';
+
+/* Фаззинг живого интерфейса: случайные действия оператора + проверка
+   инвариантов после каждого. Ошибки перехватываются из окна пульта.  */
+
+function rng(seed) {
+  let s = seed >>> 0;
+  return function () {
+    s |= 0; s = (s + 0x6D2B79F5) | 0;
+    let t = Math.imul(s ^ (s >>> 15), 1 | s);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+const VIEWS = ['overview', 'telemetry', 'attitude', 'commands', 'journal', 'settings'];
+const BAD_TEXT = ['NaN', 'undefined', '[object Object]', 'Infinity', 'null В'];
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+async function runUiFuzz(iterations, seed) {
+  const rand = rng(seed);
+  const frame = document.getElementById('app');
+  const w = frame.contentWindow, d = frame.contentDocument;
+
+  const errors = [];
+  w.addEventListener('error', e => errors.push('error: ' + e.message));
+  w.addEventListener('unhandledrejection', e => errors.push('reject: ' + e.reason));
+
+  /* Наблюдение за адресами: любая попытка сети должна быть корректным
+     абсолютным http(s)-адресом с тем же хостом, что и источник данных.
+     Так ловится порча URL при построении адреса команды.                */
+  const fetchLog = [];
+  const nativeFetch = w.fetch;
+  w.fetch = function (input) {
+    const url = typeof input === 'string' ? input : (input && input.url) || String(input);
+    fetchLog.push(url);
+    return nativeFetch.apply(this, arguments);
+  };
+
+  const findings = [];
+  function bad(kind, detail) { if (findings.length < 50) findings.push(kind + ' :: ' + detail); }
+
+  const $ = sel => d.querySelector(sel);
+  const $$ = sel => Array.prototype.slice.call(d.querySelectorAll(sel));
+  const click = sel => { const el = $(sel); if (!el) { bad('НЕТ ЭЛЕМЕНТА', sel); return false; } el.click(); return true; };
+  const setValue = (sel, value) => {
+    const el = $(sel);
+    if (!el) { bad('НЕТ ЭЛЕМЕНТА', sel); return false; }
+    el.value = value;
+    el.dispatchEvent(new w.Event('input', { bubbles: true }));
+    el.dispatchEvent(new w.Event('change', { bubbles: true }));
+    return true;
+  };
+
+  /* Инварианты, проверяемые после каждого действия.
+     deepScan включает полный обход текста документа — он дорогой,
+     поэтому на длинных прогонах выполняется не каждый раз.          */
+  let deepBudget = 0;
+  function invariants(step, forceDeep) {
+    const deep = forceDeep || deepBudget <= 0;
+
+    /* 1. В тексте интерфейса не должно быть следов неудачного форматирования.
+          Два исключения, и оба честные:
+          · значения в «ёлочках» — пульт цитирует испорченные поля пакета;
+          · колонки с сырым пакетом — там «NaN» это буквально пришедшее
+            из эфира значение, показывать его иначе нельзя.
+          Оба узла убираются из копии, остальное проверяется целиком.   */
+    if (deep) {
+      deepBudget = 10;
+      const copy = d.body.cloneNode(true);
+      /* Ровно три места, где интерфейс показывает сырые данные пакета
+         как есть (js/app.js: #ovRaw, колонка «В пакете», журнал пакетов).
+         Повреждённое значение в них обязано показываться дословно —
+         иначе оператор не увидит, что именно пришло из эфира.
+         Именно querySelectorAll: со списком селекторов querySelector
+         вернул бы первый узел, и остальные остались бы в тексте.   */
+      const raws = copy.querySelectorAll(
+        '#ovRaw, #jrPackets, #tlFields td.num:first-of-type');
+      for (let k = 0; k < raws.length; k++) raws[k].remove();
+      const text = copy.textContent.replace(/«[^»]*»/g, '«»');
+      for (const needle of BAD_TEXT) {
+        if (text.includes(needle)) {
+          const i = text.indexOf(needle);
+          bad('МУСОР В ТЕКСТЕ', needle + ' рядом с «' + text.slice(Math.max(0, i - 45), i + 45).replace(/\s+/g, ' ').trim() + '» (шаг ' + step + ')');
+          break;
+        }
+      }
+    } else {
+      deepBudget--;
+    }
+
+    /* 2. Полотна должны иметь корректный размер и контекст */
+    for (const canvas of $$('canvas')) {
+      if (!canvas.width || !canvas.height || !isFinite(canvas.width) || !isFinite(canvas.height)) {
+        bad('ПОЛОТНО', (canvas.id || '?') + ' ' + canvas.width + '×' + canvas.height);
+      }
+    }
+
+    /* 3. Счётчики не должны уходить в отрицательные значения */
+    const mk = $('#ro-mk').textContent.trim();
+    if (mk !== '—' && !/^\d+$/.test(mk)) bad('СЧЁТЧИК МК', '«' + mk + '»');
+    for (const id of ['#ro-ok', '#ro-bad']) {
+      const n = Number($(id).textContent.trim());
+      if (!isFinite(n) || n < 0) bad('СЧЁТЧИК', id + ' = ' + $(id).textContent);
+    }
+
+    /* 4. Ни один экран не должен «потеряться»: ровно один видим */
+    const visible = $$('.view').filter(v => !v.hidden);
+    if (visible.length !== 1) bad('ЭКРАНЫ', 'видимых секций: ' + visible.length);
+    const selected = $$('#tabList [role="tab"]').filter(t => t.getAttribute('aria-selected') === 'true');
+    if (selected.length !== 1) bad('ВКЛАДКИ', 'выбрано: ' + selected.length);
+
+    /* 5. Панель тревоги согласована с уровнем */
+    const bar = $('#alarmBar');
+    if (bar.hidden && bar.innerHTML.trim() !== '') bad('ТРЕВОГА', 'скрыта, но не пуста');
+
+    /* 6. Настройки в памяти не должны быть NaN */
+    try {
+      const raw = w.localStorage.getItem('cup.introsat.v1.cfg');
+      if (raw) {
+        const cfg = JSON.parse(raw);
+        for (const key of ['poll', 'stale', 'vwLo', 'vwHi', 'vcLo', 'vcHi', 'windowSec', 'thresholds', 'animate']) {
+          if (!(key in cfg)) continue;
+          if (typeof cfg[key] !== 'number' || !isFinite(cfg[key])) bad('НАСТРОЙКИ', key + ' = ' + cfg[key]);
+        }
+        /* адрес источника обязан оставаться корректным абсолютным URL */
+        if (cfg.url) {
+          let parsed = null;
+          try { parsed = new URL(cfg.url); } catch (error) { parsed = null; }
+          if (!parsed) bad('АДРЕС ИСТОЧНИКА', 'не разбирается: ' + cfg.url);
+        }
+      }
+    } catch (error) { bad('ХРАНИЛИЩЕ', error.message); }
+
+    /* 7. Все сетевые адреса — корректные абсолютные http(s) на том же
+       хосте, что и источник телеметрии. Порт теряется при неверном
+       построении адреса, а new() это не показывает.                   */
+    let sourceHost = null;
+    try {
+      const rawCfg = w.localStorage.getItem('cup.introsat.v1.cfg');
+      if (rawCfg) sourceHost = new URL(JSON.parse(rawCfg).url).host;
+    } catch (error) { sourceHost = null; }
+
+    while (fetchLog.length) {
+      const url = fetchLog.shift();
+      let parsed = null;
+      try { parsed = new URL(url); } catch (error) { parsed = null; }
+      if (!parsed || !/^https?:$/.test(parsed.protocol) || !parsed.host) {
+        bad('СЕТЕВОЙ АДРЕС', '«' + url + '» не является корректным http(s)-адресом');
+        continue;
+      }
+      if (sourceHost && parsed.host !== sourceHost) {
+        bad('ХОСТ КОМАНД', '«' + url + '» ведёт на хост ' + parsed.host + ', источник на ' + sourceHost);
+      }
+    }
+  }
+
+  /* ── Целевые проверки известных подозрительных мест ───────────────────── */
+
+  function checkFlags() {
+    /* Флаги «0» в настройках обязаны сохраняться как 0, а не превращаться в 1 */
+    setValue('#setThresholds', '0');
+    setValue('#setAnimate', '0');
+    click('#setSave');
+    const cfg = JSON.parse(w.localStorage.getItem('cup.introsat.v1.cfg') || '{}');
+    if (cfg.thresholds !== 0) bad('ФЛАГ НЕ СОХРАНЯЕТСЯ', 'thresholds=0 сохранён как ' + cfg.thresholds);
+    if (cfg.animate !== 0) bad('ФЛАГ НЕ СОХРАНЯЕТСЯ', 'animate=0 сохранён как ' + cfg.animate);
+    const body = d.body.classList.contains('no-motion');
+    if (cfg.animate === 0 && !body) bad('ТЕМА', 'animate=0, но класс no-motion не выставлен');
+    setValue('#setThresholds', '1');
+    setValue('#setAnimate', '1');
+    click('#setSave');
+  }
+
+  function checkCommandEndpoint() {
+    /* Адрес без пути («http://host:port») обязан давать корректный /command */
+    const url = 'http://127.0.0.1:8765';
+    setValue('#setUrl', url);
+    click('#setSave');
+    /* адрес вычисляется внутри app.js и виден через журнал событий */
+    const events = w.CU ? '' : '';
+    void events;
+    click('#cmProbe');
+    const note = $('#cmChannel').textContent;
+    if (!note) bad('КАНАЛ КОМАНД', 'нет текста состояния');
+    /* главное — команда не должна падать и должна попасть в очередь */
+    setValue('#cmCmd', 'WHEEL_SET');
+    setValue('#cmParam', '5000');
+    $('#cmForm').dispatchEvent(new w.Event('submit', { bubbles: true, cancelable: true }));
+    const queued = $('#cmQueue').textContent.trim();
+    if (!/WHEEL_SET/.test(queued)) bad('ОЧЕРЕДЬ КОМАНД', 'команда не попала в очередь: ' + queued.slice(0, 60));
+    setValue('#setUrl', 'http://127.0.0.1:8765/telemetry');
+    click('#setSave');
+  }
+
+  function checkValidation() {
+    setValue('#cmCmd', 'WHEEL_SET');
+    setValue('#cmParam', 'не число');
+    $('#cmForm').dispatchEvent(new w.Event('submit', { bubbles: true, cancelable: true }));
+    if ($('#cmError').hidden) bad('ВАЛИДАЦИЯ', 'нечисловой аргумент принят без ошибки');
+    setValue('#cmParam', '99999');
+    $('#cmForm').dispatchEvent(new w.Event('submit', { bubbles: true, cancelable: true }));
+    if ($('#cmError').hidden) bad('ВАЛИДАЦИЯ', 'аргумент вне диапазона принят');
+    setValue('#cmParam', '-32768');
+    $('#cmForm').dispatchEvent(new w.Event('submit', { bubbles: true, cancelable: true }));
+    if (!$('#cmError').hidden) bad('ВАЛИДАЦИЯ', 'граничное значение -32768 отклонено');
+    setValue('#cmCmd', 'PING');
+    setValue('#cmParam', '');
+  }
+
+  function checkSearch() {
+    setValue('#jrSearch', 'нетакого');
+    if (!$('#jrPackets').textContent.includes('Нет записей')) bad('ПОИСК', 'пустой результат не показан');
+    setValue('#jrSearch', 'AA55');
+    setValue('#jrSearch', '');
+    setValue('#jrLevel', '2');
+    setValue('#jrLevel', 'all');
+  }
+
+  /* Воспроизведение записи целиком не покрыто другими проверками:
+     загрузка файла, проигрывание, пауза, возврат к эмулятору.        */
+  function makeCsv(rows, opts) {
+    opts = opts || {};
+    const lines = [];
+    if (!opts.noHeader) lines.push('ПРЕАМБУЛА;ВРЕМЯ ОТ ЗАПУСКА МК;АКБ;СД1;СД2;СД3;СД4;AX;AY;AZ;GX;GY;GZ;MX;MY;MZ;МАХОВИК;ПОСТАМБУЛА');
+    for (const row of rows) lines.push(row);
+    return lines.join('\n');
+  }
+
+  function upload(name, text) {
+    const input = $('#jrFile');
+    const dt = new w.DataTransfer();
+    dt.items.add(new w.File([text], name, { type: 'text/csv' }));
+    input.files = dt.files;
+    input.dispatchEvent(new w.Event('change', { bubbles: true }));
+  }
+
+  async function checkReplay() {
+    click('#tab-journal');
+    await sleep(50);
+
+    /* 1. корректная запись */
+    const rows = [];
+    for (let i = 0; i < 60; i++) {
+      rows.push('AA55;' + i + ';7800;' + (1000 + i) + ';' + (2000 + i) + ';' + (3000 + i) + ';' + (4000 + i) +
+        ';' + (100 * i) + ';0;-16384;10;20;30;200;100;50;' + (i * 7) + ';0D0A');
+    }
+    upload('полёт.csv', makeCsv(rows));
+    await sleep(700);
+    if ($('#jrToLive').hidden) bad('ВОСПРОИЗВЕДЕНИЕ', 'панель «Вернуться к эмулятору» не появилась');
+    if (!/полёт/.test($('#jrReplayMeta').textContent)) bad('ВОСПРОИЗВЕДЕНИЕ', 'имя записи не показано: ' + $('#jrReplayMeta').textContent.trim().slice(0, 50));
+
+    /* 2. пауза и продолжение */
+    click('#jrReplayToggle');
+    await sleep(120);
+    if ($('#jrReplayToggle').textContent !== 'Продолжить') bad('ПАУЗА', 'кнопка: ' + $('#jrReplayToggle').textContent);
+    const paused = $('#jrReplayMeta').textContent;
+    await sleep(300);
+    if ($('#jrReplayMeta').textContent !== paused) bad('ПАУЗА', 'позиция продолжает меняться при паузе');
+    click('#jrReplayToggle');
+
+    /* 3. максимальный темп: «без пауз» */
+    setValue('#jrReplaySpeed', '0');
+    await sleep(400);
+
+    /* 4. битая запись: обрезка, мусор, пустые строки */
+    upload('битая.csv', '\n\nAA55;1;7800;0D0A\n' +
+      'мусор без разделителей\n' +
+      'ZZZZ;2;7800;1;2;3;4;5;6;7;8;9;10;11;12;13;0D0A\n' +
+      'AA55;3;OFF;OFF;OFF;OFF;OFF;OFF;OFF;OFF;OFF;OFF;OFF;OFF;OFF;OFF;OFF;0D0A\n');
+    await sleep(500);
+
+    /* 5. пустой файл */
+    upload('пусто.csv', '\n\n');
+    await sleep(250);
+
+    /* 6. файл без заголовка, только данные */
+    upload('без-шапки.csv', makeCsv(rows.slice(0, 20), { noHeader: true }));
+    await sleep(350);
+
+    click('#jrToLive');
+    await sleep(120);
+    if (!$('#jrToLive').hidden) bad('ВОЗВРАТ К ЭМУЛЯТОРУ', 'кнопка не скрылась после возврата');
+  }
+
+  /* Размер окна: на узком экране полотна почти вырождаются, и именно
+     там обычно и ломается отрисовка. Заявленная поддержка телефонов
+     из README проверяется здесь.                                      */
+  async function checkResponsive() {
+    const sizes = [
+      [320, 568],   // телефон
+      [360, 640],
+      [768, 1024],  // планшет
+      [1024, 600],
+      [1920, 1080],
+      [2400, 400],   // очень низкое окно
+      [280, 900],    // очень узкое окно
+    ];
+    const startWidth = frame.style.width, startHeight = frame.style.height;
+    for (const [width, height] of sizes) {
+      frame.style.width = width + 'px';
+      frame.style.height = height + 'px';
+      click('#tab-' + VIEWS[rand() * VIEWS.length | 0]);
+      await sleep(260);
+      for (const v of VIEWS) {
+        const tab = $('#tab-' + v);
+        if (!tab) { bad('НЕТ ВКЛАДКИ', v); continue; }
+        tab.click();
+        await sleep(140);
+        if (v === 'telemetry' || v === 'overview' || v === 'attitude') {
+          for (const canvas of $$('canvas')) {
+            if (!canvas.width || !canvas.height) {
+              bad('ПОЛОТНО НОЛЬ', (canvas.id || '?') + ' ' + canvas.width + '×' + canvas.height +
+                ' при окне ' + width + '×' + height);
+            }
+          }
+        }
+      }
+      invariants('окно ' + width + '×' + height);
+    }
+    frame.style.width = startWidth;
+    frame.style.height = startHeight;
+  }
+
+  /* Долгий прогон: много пакетов разом — проверка памяти и устойчивости
+     графиков на полной истории окна.                                     */
+  async function checkSoak() {
+    click('#tab-telemetry');
+    const rows = [];
+    for (let i = 0; i < 6000; i++) {
+      const bad0 = i % 700 === 0 ? 'OFF' : String((i * 37) % 65000);
+      rows.push('AA55;' + i + ';' + (6500 + (i % 1500)) + ';' + (i % 3000) + ';' + (i % 2000) + ';' +
+        (i % 1000) + ';' + (i % 700) + ';' + (i % 30000) + ';' + (i % 17000) + ';-16384;' +
+        (i % 90) + ';' + (i % 70) + ';' + (i % 50) + ';' + (200 + i % 90) + ';' + (100 + i % 60) + ';' +
+        (i % 300) + ';' + (i % 1200) + ';0D0A');
+      void bad0;
+    }
+    upload('долгий.csv', makeCsv(rows));
+    await sleep(200);
+    setValue('#jrReplaySpeed', '0');
+    /* «без пауз»: 25 пакетов каждые 100 мс — весь файл примерно за 24 с,
+       ждём куда меньше и успеваем снять метрики на середине            */
+    for (let k = 0; k < 12; k++) {
+      await sleep(400);
+      invariants('загрузка ' + k);
+    }
+    click('#tab-overview');
+    await sleep(300);
+    invariants('обзор после загрузки');
+    click('#tab-attitude');
+    await sleep(300);
+    invariants('ориентация после загрузки');
+    click('#tab-journal');
+    await sleep(300);
+    invariants('журнал после загрузки');
+    click('#jrToLive');
+    await sleep(200);
+  }
+
+  /* ── Основной цикл ───────────────────────────────────────────────────── */
+  await sleep(600);
+
+  checkFlags();
+  await sleep(150);
+  checkCommandEndpoint();
+  await sleep(150);
+  checkValidation();
+  await checkReplay();
+  await sleep(150);
+
+  for (let n = 0; n < iterations; n++) {
+    const pick = rand();
+    if (pick < 0.22) {
+      click('#tab-' + VIEWS[rand() * VIEWS.length | 0]);
+    } else if (pick < 0.34) {
+      click('#btnFreeze'); click('#btnFreeze');
+    } else if (pick < 0.44) {
+      click('#btnTheme');
+    } else if (pick < 0.54) {
+      setValue('#tlWindow', ['120', '300', '900'][rand() * 3 | 0]);
+    } else if (pick < 0.62) {
+      const group = $$('#tlGroups [data-group]');
+      if (group.length) group[rand() * group.length | 0].click();
+    } else if (pick < 0.70) {
+      const legend = $$('#tlLegend [data-series]');
+      if (legend.length) legend[rand() * legend.length | 0].click();
+    } else if (pick < 0.80) {
+      setValue('#jrSearch', ['AA55', 'OFF', 'нет', ''][rand() * 4 | 0]);
+      setValue('#jrLevel', ['all', '1', '2'][rand() * 3 | 0]);
+    } else if (pick < 0.88) {
+      setValue('#setVwLo', (5 + rand() * 4).toFixed(2));
+      setValue('#setVwHi', (8 + rand() * 2).toFixed(2));
+      setValue('#setVcLo', (4 + rand() * 2).toFixed(2));
+      setValue('#setVcHi', (9 + rand() * 2).toFixed(2));
+      click('#setSave');
+    } else if (pick < 0.94) {
+      setValue('#cmCmd', ['PING', 'WHEEL_SET', 'DUMP_LOG'][rand() * 3 | 0]);
+      setValue('#cmParam', String(Math.round(rand() * 60000) - 30000));
+      $('#cmForm').dispatchEvent(new w.Event('submit', { bubbles: true, cancelable: true }));
+    } else if (pick < 0.97) {
+      setValue('#setStale', (1 + rand() * 5).toFixed(1));
+      setValue('#setPoll', String(40 + rand() * 400 | 0));
+      click('#setSave');
+    } else {
+      const canvas = $('#atScene');
+      if (canvas && rand() < 0.5) {
+        canvas.dispatchEvent(new w.WheelEvent('wheel', { deltaY: rand() * 200 - 100, bubbles: true, cancelable: true }));
+      } else if (canvas) {
+        canvas.dispatchEvent(new w.WheelEvent('wheel', { deltaY: -400, bubbles: true, cancelable: true }));
+      }
+    }
+
+    if (n % (iterations > 1000 ? 25 : 7) === 0) await sleep(30);
+    invariants(n);
+  }
+
+  checkSearch();
+  await sleep(200);
+  invariants('финал', true);
+  await checkResponsive();
+  await checkSoak();
+  invariants('после загрузки', true);
+
+  /* Уборка: вернуть настройки по умолчанию, чтобы не наследовать мусор */
+  try { w.localStorage.clear(); } catch (error) { void error; }
+
+  const result = {
+    iterations, seed,
+    findings,
+    findingCount: findings.length,
+    jsErrors: Array.from(new Set(errors)).slice(0, 20),
+  };
+
+  /* Пульт внутри iframe продолжает опрашивать эмулятор и после прогона:
+     цикл живёт сам по себе. Если не убрать iframe, завершённая вкладка
+     продолжает долбить эмулятор и забирать процессор — при десятках
+     вкладок это ломает и эмулятор, и сам прогон.                  */
+  try { frame.remove(); } catch (error) { frame.src = 'about:blank'; }
+
+  return result;
+}
+
+window.__RESULT = null;
+window.__RUN = runUiFuzz;
+window.__START = () => {
+  const q = new URLSearchParams(location.search);
+  runUiFuzz(Number(q.get('n') || 200), Number(q.get('seed') || 1))
+    .then(r => { window.__RESULT = r; })
+    .catch(e => { window.__RESULT = { error: e.message, stack: e.stack }; });
+};
+</script>
+</body>
+</html>
