@@ -1,0 +1,46 @@
+{
+  "name": "introsat-cup",
+  "version": "1.0.0",
+  "description": "ИнтроСат · Пульт оператора ЦУП",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder --mac --win --linux",
+    "build:mac": "electron-builder --mac",
+    "build:win": "electron-builder --win",
+    "build:linux": "electron-builder --linux"
+  },
+  "keywords": [],
+  "author": "ЦУП",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^31.7.7",
+    "electron-builder": "^24.0.0"
+  },
+  "build": {
+    "appId": "ru.cup.introsat",
+    "productName": "ИнтроСат ЦУП",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "index.html",
+      "css/**",
+      "js/**",
+      "assets/**"
+    ],
+    "mac": {
+      "category": "public.app-category.utilities",
+      "icon": "assets/icon.icns"
+    },
+    "win": {
+      "icon": "assets/icon.ico"
+    },
+    "linux": {
+      "icon": "assets/icon.png",
+      "category": "Utility"
+    }
+  }
+}

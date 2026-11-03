@@ -1,0 +1,721 @@
+/* =============================================================================
+   ИнтроСат · пульт оператора ЦУП
+   Таблица стилей.
+
+   Композиция
+   ----------
+   Пульт построен как приборная стойка, а не как сетка карточек. Слева
+   постоянная панель приборов: она не переключается вместе с экраном,
+   поэтому состояние аппарата видно из любого раздела. Справа — рабочая
+   область, разбитая на два смысловых столбца с волосяным разделителем.
+
+   Разделы иерархии — не рамки и не тени, а пустое место и волосяные линии.
+   Рамка используется ровно в четырёх местах, где элемент действительно
+   что-то содержит: поле ввода, кнопка, модальное окно, блочный код.
+
+   Порядок разделов:
+     1. Токены
+     2. База и типографика
+     3. Шапка и вердикт
+     4. Полоса тревоги
+     5. Приборная панель
+     6. Навигация
+     7. Рабочая область: сетка и разделы
+     8. Таблицы, списки, определения
+     9. Графики и легенды
+    10. Формы и кнопки
+    11. Окно справки
+    12. Адаптив
+     ========================================================================== */
+
+/* ── 1. Токены ─────────────────────────────────────────────────────────────
+   Палитра намеренно скучная: тёплая бумага, чернильный текст, три
+   смысловых цвета из п. 8.4 ТЗ (зелёный/жёлтый/красный) и один
+   интерфейсный акцент, который никогда не путается с состоянием.
+   Насыщенность цветов состояния снижена: на мониторе оператора цветом
+   помечают не «факт», а состояние, и кричащий красный утомляет за час
+   непрерывного дежурства.                                              */
+:root {
+  color-scheme: light;
+
+  --paper:      #f2f1ee;
+  --surface:    #fbfaf8;
+  --ink:        #15191d;
+  --ink-2:      #454e56;
+  /* Третий уровень — самые мелкие подписи (11–11,5 px). Держим его
+     на уровне контраста 4.9 к бумаге: WCAG AA требует 4.5 и для мелкого
+     текста, а такие подписи читаются именно на дежурстве.           */
+  --ink-3:      #646d75;
+  --rule:       #d9d5ce;
+  --rule-2:     #bab5ab;
+  --hover:      rgba(21, 25, 29, .05);
+
+  --ok:         #2f6b46;
+  --ok-bg:      #e8efea;
+  --warn:       #8a6410;
+  --warn-bg:    #f5eedb;
+  --bad:        #a32a1e;
+  --bad-bg:     #f8e6e2;
+
+  --accent:     #25506f;
+
+  /* категории графиков: различимы по тону и по штриховке */
+  --c1: #15191d;
+  --c2: #25506f;
+  --c3: #8a5a2b;
+  --c4: #4a6b52;
+
+  /* Аппарат в 3D: заливка граней и обводка. Корпус светлее бумаги, панели
+     заметно темнее — иначе силуэт сливается с фоном. Обводка чернильная,
+     она и делает модель объёмной при плоском освещении. */
+  --body: 206, 202, 195;
+  --panel: 58, 82, 95;
+  --edge: #15191d;
+
+  --sans:  system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --mono:  ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, "DejaVu Sans Mono", monospace;
+
+  --pad: 30px;
+  --rail: 296px;
+  --instr: 300px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { color-scheme: dark;
+    --paper: #14171a; --surface: #191d21; --ink: #e7eaec; --ink-2: #a9b1b7; --ink-3: #7b848c;
+    --rule: #272d32; --rule-2: #3a4249; --hover: rgba(255, 255, 255, .055);
+    --ok: #64b487; --ok-bg: #16241c; --warn: #d6aa41; --warn-bg: #27200f; --bad: #e4735f; --bad-bg: #2b1713;
+    --accent: #8ab4d8;
+    --c1: #e7eaec; --c2: #8ab4d8; --c3: #cf9455; --c4: #84b392;
+    --body: 74, 80, 86; --panel: 96, 130, 148; --edge: #0b0e10;
+  }
+}
+:root[data-theme="dark"] { color-scheme: dark;
+  --paper: #14171a; --surface: #191d21; --ink: #e7eaec; --ink-2: #a9b1b7; --ink-3: #7b848c;
+  --rule: #272d32; --rule-2: #3a4249; --hover: rgba(255, 255, 255, .055);
+  --ok: #64b487; --ok-bg: #16241c; --warn: #d6aa41; --warn-bg: #27200f; --bad: #e4735f; --bad-bg: #2b1713;
+  --accent: #8ab4d8;
+  --c1: #e7eaec; --c2: #8ab4d8; --c3: #cf9455; --c4: #84b392;
+  --body: 74, 80, 86; --panel: 96, 130, 148; --edge: #0b0e10;
+}
+
+/* ── 2. База и типографика ─────────────────────────────────────────────────
+   Три кегля работают: 13 для текста, 11 для подписей, моноширинный для
+   чисел. Всё, что меняется в динамике, набрано моноширинным — иначе
+   цифры «прыгают» по ширине и строка перестаёт читаться.               */
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font: 400 14px/1.5 var(--sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+code, kbd, pre, .num, .mono, .readout dd, .stats dd, .verdict__word { font-family: var(--mono); }
+code { font-size: .92em; }
+p { margin: 0 0 10px; }
+h1, h2, h3 { margin: 0; font-weight: 600; }
+a { color: var(--accent); text-underline-offset: 3px; }
+
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.sr-only {
+  position: absolute; width: 1px; height: 1px; overflow: hidden;
+  clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap;
+}
+.skiplink {
+  position: absolute; left: 8px; top: -60px; z-index: 20;
+  padding: 10px 16px; background: var(--ink); color: var(--paper);
+  font-size: 13px; text-decoration: none; transition: top .12s linear;
+}
+.skiplink:focus { top: 8px; }
+
+/* ── 3. Шапка и вердикт ───────────────────────────────────────────────────
+   Вердикт — ответ на вопрос «что с аппаратом» в одном слове. Он стоит
+   слева от счётчиков и держит высоту всей шапки, поэтому при переходе
+   из «нормы» в «аварию» взгляд замечает это периферийным зрением.     */
+.masthead {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 14px 28px;
+  padding: 12px var(--pad);
+  border-bottom: 1px solid var(--rule-2);
+}
+
+.masthead__id { display: flex; align-items: baseline; gap: 12px; }
+.wordmark { font: 600 19px/1 var(--sans); letter-spacing: -.01em; }
+.wordmark__role {
+  font: 500 10.5px/1 var(--mono); letter-spacing: .12em;
+  text-transform: uppercase; color: var(--ink-3); white-space: nowrap;
+}
+
+/* Слово-состояние: форма и цвет дублируют друг друга, поэтому читается
+   и на чёрно-белом экране, и при нарушениях цветовосприятия. */
+.verdict { margin: 0; display: flex; align-items: baseline; gap: 12px; min-width: 0; }
+.verdict__word {
+  font-size: 21px; font-weight: 500; letter-spacing: .04em;
+  color: var(--ink-3); white-space: nowrap;
+}
+.verdict__why {
+  font-size: 13px; color: var(--ink-2); min-width: 0;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.verdict[data-level="0"] .verdict__word { color: var(--ok); }
+.verdict[data-level="1"] .verdict__word { color: var(--warn); }
+.verdict[data-level="2"] .verdict__word { color: var(--bad); }
+.verdict[data-level="2"] .verdict__word::after {
+  content: ""; display: inline-block; width: 9px; height: 9px; margin-left: 9px;
+  background: var(--bad); animation: beacon 1.1s steps(2, end) infinite;
+}
+
+/* Состояние канала продублировано в приборной панели; здесь оно же
+   живёт рядом со счётчиками — как индикатор на самой стойке. */
+.chan {
+  display: inline-flex; align-items: center; gap: 9px;
+  margin: 0; font-size: 13px; font-weight: 500;
+  color: var(--ink-2); min-width: 0;
+}
+.chan__glyph { flex: none; width: 9px; height: 9px; background: currentColor; color: var(--ink-3); }
+.chan__text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.chan[data-level="0"] { color: var(--ok); }
+.chan[data-level="1"] { color: var(--warn); }
+.chan[data-level="2"] { color: var(--bad); }
+.chan[data-level="0"] .chan__glyph { border-radius: 50%; }
+.chan[data-level="1"] .chan__glyph { clip-path: polygon(50% 0, 100% 100%, 0 100%); }
+.chan[data-level="2"] .chan__glyph { animation: beacon 1.1s steps(2, end) infinite; }
+.chan--block { padding: 8px 0 10px; }
+@keyframes beacon { 50% { opacity: .25 } }
+body.no-motion .chan[data-level="2"] .chan__glyph,
+body.no-motion .verdict[data-level="2"] .verdict__word::after { animation: none; }
+
+/* Счётчики прижаты к сетке и разделены линейками: приборная группа,
+   а не набор плиток. */
+.readouts { display: flex; margin: 0; }
+.readout { padding: 0 18px; }
+.readout + .readout { border-left: 1px solid var(--rule); }
+.readout dt {
+  font: 500 10px/1.4 var(--mono); letter-spacing: .09em;
+  text-transform: uppercase; color: var(--ink-3); white-space: nowrap;
+}
+.readout dd {
+  margin: 3px 0 0; font-size: 17px; font-weight: 500; line-height: 1.1;
+  font-variant-numeric: tabular-nums; white-space: nowrap;
+}
+.readout dd .unit { font-size: 10.5px; color: var(--ink-3); margin-left: 2px; }
+
+.masthead__tools { display: flex; gap: 6px; }
+
+/* ── 4. Полоса тревоги ─────────────────────────────────────────────────────
+   Единственный «громкий» элемент интерфейса. Вместо диагональной ленты
+   опасности — цветная планка слева толщиной в два кегля заголовка:
+   она читается на периферии и не создаёт фактуры поверх текста.    */
+.alarm {
+  display: flex; align-items: baseline; gap: 14px;
+  padding: 11px var(--pad) 11px calc(var(--pad) - 4px);
+  border-bottom: 1px solid var(--rule);
+  border-left: 4px solid var(--bad);
+  background: var(--bad-bg);
+  font-size: 14px; color: var(--ink);
+}
+.alarm[data-level="1"] { border-left-color: var(--warn); background: var(--warn-bg); }
+.alarm__label {
+  font: 600 11px/1 var(--mono); letter-spacing: .12em; text-transform: uppercase;
+  color: var(--bad); white-space: nowrap;
+}
+.alarm[data-level="1"] .alarm__label { color: var(--warn); }
+.alarm__text { color: var(--ink); min-width: 0; }
+
+/* ── 5. Приборная панель ───────────────────────────────────────────────────
+   Постоянная левая колонка. Разделы отбиты линейками и воздухом.
+   Лента событий обрезается по высоте панели: важна свежесть верхних
+   записей, а не их количество.                                         */
+.shell {
+  display: grid;
+  grid-template-columns: var(--rail) minmax(0, 1fr);
+  align-items: start;
+}
+
+.rail {
+  position: sticky; top: 0;
+  height: 100vh;
+  display: flex; flex-direction: column;
+  padding: 0 var(--pad) var(--pad) var(--pad);
+  border-right: 1px solid var(--rule);
+  overflow: hidden;
+}
+.rail__section { padding: 16px 0 14px; border-bottom: 1px solid var(--rule); }
+.rail__section:first-child { padding-top: 4px; }
+/* Лента событий не сжимается ниже трёх записей. Раньше стоял
+   min-height: 0, и тогда при нехватке высоты рельса весь лишний съедала
+   лента: на окне 1440×900 с приборами слева она схлопывалась до 31 px, а
+   восемь записей помещались в 4 px. Недостающее место должен отдавать не
+   лента — на неё смотрят чаще всего, — а таблица приборов. */
+.rail__section--feed { flex: 1 1 auto; min-height: 168px; display: flex; flex-direction: column; }
+.rail__head {
+  display: flex; align-items: baseline; justify-content: space-between;
+  gap: 10px; margin-bottom: 11px;
+}
+.rail__head h2 {
+  font: 600 11px/1.3 var(--sans); letter-spacing: .13em;
+  text-transform: uppercase; color: var(--ink-2);
+}
+.rail__meta { margin: 0; font: 400 11.5px var(--mono); color: var(--ink-3); white-space: nowrap; }
+/* Счётчик событий ведёт в полный журнал: лента обрезана по высоте, и без
+   перехода её не с чем сопоставить. Вид — как у ссылки, подчёркивание
+   появляется при наведении, чтобы панель не пестрела. */
+.rail__meta button {
+  padding: 0; border: 0; background: none; cursor: pointer;
+  font: inherit; color: var(--ink-3); text-decoration: none;
+}
+.rail__meta button:hover, .rail__meta button:focus-visible { color: var(--accent); text-decoration: underline; }
+.rail .chan { margin-bottom: 10px; }
+.stats--rail { font-size: 12.5px; }
+.stats--rail dt, .stats--rail dd { padding: 5px 0; font-size: 12.5px; }
+
+/* Приборы: одна строка на модуль, показание под именем */
+.devices { width: 100%; border-collapse: collapse; font-size: 13px; }
+.devices tbody tr { border-bottom: 1px solid var(--rule); }
+.devices tbody tr:last-child { border-bottom: 0; }
+.devices td { padding: 8px 0 9px; vertical-align: top; }
+.devices td:first-child { padding-right: 12px; }
+.dev-name { display: block; font-weight: 600; }
+.dev-role { display: block; margin-top: 1px; font-size: 11.5px; font-weight: 400; color: var(--ink-3); }
+.dev-read {
+  display: block; margin-top: 5px; font-family: var(--mono);
+  font-size: 12.5px; font-variant-numeric: tabular-nums; color: var(--ink-2);
+}
+
+/* Лента событий в панели: цветная планка слева заменяет точку-глиф,
+   чтобы ряд событий читался как календарь, а не как список точек. */
+.feed { list-style: none; margin: 0; padding: 0 0 4px; overflow-y: auto; flex: 1 1 auto; }
+.feed li {
+  padding: 5px 0 5px 10px; border-left: 2px solid var(--rule);
+  font-size: 12.5px; color: var(--ink-2);
+}
+.feed li[data-level="0"] { border-left-color: var(--ok); }
+.feed li[data-level="1"] { border-left-color: var(--warn); }
+.feed li[data-level="2"] { border-left-color: var(--bad); }
+.feed time { display: block; font: 400 10.5px/1.4 var(--mono); color: var(--ink-3); }
+.feed .msg { display: block; }
+
+/* ── 6. Навигация ──────────────────────────────────────────────────────────
+   Номера экранов оставлены: это ссылка на ручную оператора, а не
+   украшение — на них ссылается справка.                                */
+.tabs { padding: 0 var(--pad); border-bottom: 1px solid var(--rule); overflow-x: auto; }
+[role="tablist"] { display: flex; gap: 4px; }
+[role="tab"] {
+  padding: 11px 14px 10px; border: 0; background: none;
+  border-bottom: 2px solid transparent;
+  font: 500 13.5px var(--sans); color: var(--ink-3); cursor: pointer; white-space: nowrap;
+}
+[role="tab"] i {
+  font: 500 10.5px var(--mono); font-style: normal;
+  color: var(--rule-2); margin-right: 8px;
+}
+[role="tab"]:hover { color: var(--ink); }
+[role="tab"][aria-selected="true"] { color: var(--ink); border-bottom-color: var(--ink); }
+[role="tab"][aria-selected="true"] i { color: var(--accent); }
+
+.seg { display: flex; flex-wrap: wrap; gap: 2px 18px; margin-bottom: 13px; }
+.seg [role="tab"] { padding: 3px 0 4px; font-size: 12.5px; }
+.seg [role="tab"] i { display: none; }
+
+/* ── 7. Рабочая область ────────────────────────────────────────────────────
+   Два смысловых столбца. Левая часть — графики (они читаются как
+   «что происходит»), правая — таблицы чисел (что именно). Разделы
+   внутри столбца отбиты линейками, а не рамками.                      */
+.stage { min-width: 0; }
+.view { padding: 0 var(--pad) 52px; }
+.view__cols { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr); }
+.col--main { padding-right: 38px; min-width: 0; }
+.col--aside { padding-left: 38px; border-left: 1px solid var(--rule); min-width: 0; }
+
+/* ── Положение приборов ───────────────────────────────────────────────────
+   Блок один и тот же, меняется только его родитель: справа он колонкой
+   в «Обзоре», слева — в постоянной панели. Позиция объявлена атрибутом
+   на корне, поэтому переключение не трогает разметку и не рвёт состояние
+   таблицы. Когда приборы слева, колонка в обзоре скрыта целиком: пустой
+   столбец с вертикальной линейкой выглядел бы ошибочной разметкой.
+
+   Таблицы обзора при этом уходят под графики, а не встают между ними:
+   третья колонка отнимала у графиков 430 px, и на широком окне ряды
+   сливались. Таблицы — справочный материал, графики — то, что читают
+   непрерывно, поэтому ширина у графиков остаётся.                  */
+.col--instr { padding-left: 38px; border-left: 1px solid var(--rule); min-width: 0; }
+:root[data-instruments="right"] #view-overview .view__cols {
+  grid-template-columns: minmax(0, 1fr) var(--instr);
+}
+:root[data-instruments="right"] #view-overview .col--instr { grid-column: 2; grid-row: 1 / -1; }
+:root[data-instruments="right"] #view-overview .col--main { padding-right: 38px; }
+:root[data-instruments="right"] #view-overview .col--aside {
+  grid-column: 1; grid-row: 2;
+  padding-right: 38px; padding-left: 0; border-left: 0;
+}
+:root[data-instruments="right"] #view-overview .col--aside > .block:first-child {
+  border-top: 1px solid var(--rule); padding-top: 24px;
+}
+:root[data-instruments="left"] .col--instr { display: none; }
+
+/* В постоянной панели приборы — обычная секция рельса: свои отступы,
+   своя линейка. Отступы секций рельса заданы на .rail__section, а блок
+   приборов остаётся .block, потому что в обзоре он оформляется иначе. */
+/* Приборы в постоянной панели уступают высоту ленте событий: min-height:0
+   разрешает блоку сжаться, overflow — прокручивать собственное содержимое.
+   Таблица модулей справочная, её можно прокрутить; ленту — нельзя потерять. */
+#instrHomeLeft { padding-top: 4px; min-height: 0; overflow-y: auto; }
+#instrHomeLeft:empty { display: none; }
+#instrHomeLeft .block { padding: 16px 0 14px; border-bottom: 1px solid var(--rule); }
+#instrHomeLeft .block__head { margin-bottom: 11px; }
+#instrHomeLeft .block__head h2 { font-size: 11px; }
+
+.block { padding: 24px 0 20px; border-bottom: 1px solid var(--rule); }
+.col > .block:first-child, .view__cols > .col > .block:first-child { padding-top: 22px; }
+.col > .block:last-child { border-bottom: 0; }
+.block--flush { padding-bottom: 16px; }
+.block__head {
+  display: flex; align-items: baseline; justify-content: space-between;
+  gap: 8px 18px; margin-bottom: 14px;
+}
+.block__head h2 {
+  font: 600 11.5px/1.3 var(--sans); letter-spacing: .13em;
+  text-transform: uppercase; color: var(--ink-2);
+}
+.block__meta { margin: 0; font: 400 11.5px var(--mono); color: var(--ink-3); text-align: right; white-space: nowrap; }
+/* Обёртка содержимого раздела нужна, чтобы длинные таблицы и код не
+   распирали колонку: min-width:0 снимает автоматическое расширение
+   grid-элемента по содержимому. */
+.block__body { min-width: 0; }
+
+/* ── 8. Таблицы, списки, определения ───────────────────────────────────────*/
+.grid { width: 100%; border-collapse: collapse; font-size: 13px; }
+.grid thead th {
+  padding: 0 16px 7px 0; text-align: left; vertical-align: bottom;
+  font: 500 10.5px var(--sans); letter-spacing: .1em; text-transform: uppercase;
+  color: var(--ink-3); border-bottom: 1px solid var(--rule-2); white-space: nowrap;
+}
+.grid td { padding: 9px 16px 9px 0; border-bottom: 1px solid var(--rule); vertical-align: top; }
+.grid tbody th {
+  padding: 9px 16px 9px 0; border-bottom: 1px solid var(--rule);
+  text-align: left; vertical-align: top; font-weight: 600; font-size: 13px;
+}
+.grid th:last-child, .grid td:last-child { padding-right: 0; }
+.grid tbody tr:last-child td { border-bottom: 0; }
+.grid tbody tr:last-child th { border-bottom: 0; }
+.grid tbody tr:hover td, .grid tbody tr:hover th { background: var(--hover); }
+.grid .num { text-align: right; font-family: var(--mono); font-size: 12.5px; white-space: nowrap; }
+.grid--fields th:first-child, .grid--packets th:nth-child(3) { width: 40%; }
+.grid--queue .num { width: 20%; }
+
+.mod-name { font-weight: 600; }
+.mod-role { display: block; margin-top: 2px; font-size: 11.5px; font-weight: 400; color: var(--ink-3); }
+
+/* Индикатор состояния: цвет + слово + форма глифа (п. 8.4 ТЗ и
+   требование доступности: одного цвета мало). */
+.state { display: inline-flex; align-items: baseline; gap: 8px; font-size: 12.5px; font-weight: 500; white-space: nowrap; }
+.state::before { content: ""; width: 8px; height: 8px; background: currentColor; align-self: center; flex: none; }
+.state[data-level="0"] { color: var(--ok); }
+.state[data-level="1"] { color: var(--warn); }
+.state[data-level="1"]::before { clip-path: polygon(50% 0, 100% 100%, 0 100%); }
+.state[data-level="2"] { color: var(--bad); }
+.state[data-level="2"]::before { box-shadow: inset 0 0 0 2px var(--paper); }
+.state[data-level="2"].is-alarm::before { animation: beacon 1.1s steps(2, end) infinite; }
+.state__why { display: block; margin-top: 3px; font-size: 11.5px; font-weight: 400; color: var(--ink-3); white-space: normal; }
+
+/* Определения в две колонки: подпись слева, значение справа */
+.stats { display: grid; grid-template-columns: minmax(0, 1fr) auto; margin: 0; font-size: 13px; }
+.stats dt { padding: 7px 18px 7px 0; color: var(--ink-2); border-bottom: 1px solid var(--rule); }
+.stats dd {
+  margin: 0; padding: 7px 0; text-align: right;
+  font: 500 13px var(--mono); font-variant-numeric: tabular-nums;
+  border-bottom: 1px solid var(--rule); white-space: nowrap;
+}
+.stats dt:last-of-type, .stats dd:last-of-type { border-bottom: 0; }
+.stats--big dd { font-size: 19px; }
+.stats dd .unit { font-size: 11px; color: var(--ink-3); margin-left: 3px; }
+.stats dd[data-level="1"] { color: var(--warn); }
+.stats dd[data-level="2"] { color: var(--bad); }
+
+/* Сырая строка пакета: единственное место, где уместна рамка. */
+.raw {
+  margin: 0; padding: 11px 13px; min-height: 70px;
+  border: 1px solid var(--rule); background: var(--surface);
+  font: 11.5px/1.7 var(--mono); white-space: pre-wrap; word-break: break-all;
+}
+.raw[data-level="2"] { border-color: var(--bad); }
+
+.note { margin: 10px 0 0; max-width: 66ch; font-size: 12.5px; color: var(--ink-2); }
+
+/* Лента событий: сетка «время · глиф · текст» повторяет приборную
+   панель, чтобы чтение шло по одному шаблону. */
+.timeline { list-style: none; margin: 0; padding: 0; }
+.timeline li {
+  display: grid; grid-template-columns: 62px 9px minmax(0, 1fr); gap: 0 10px;
+  padding: 8px 0; border-bottom: 1px solid var(--rule); font-size: 13px;
+}
+.timeline li:last-child { border-bottom: 0; }
+.timeline time { font: 400 11.5px/1.5 var(--mono); color: var(--ink-3); }
+.timeline .mark { width: 8px; height: 8px; margin-top: 5px; background: var(--ink-3); }
+.timeline .mark[data-level="0"] { background: var(--ok); border-radius: 50%; }
+.timeline .mark[data-level="1"] { background: var(--warn); clip-path: polygon(50% 0, 100% 100%, 0 100%); }
+.timeline .mark[data-level="2"] { background: var(--bad); box-shadow: inset 0 0 0 2px var(--paper); }
+.timeline .msg { color: var(--ink-2); }
+.timeline .msg b { color: var(--ink); font-weight: 600; }
+.timeline--tight li { padding: 6px 0; font-size: 12.5px; }
+
+/* Причины отклонений с относительной частотой */
+.defects { list-style: none; margin: 0; padding: 0; }
+.defects li { padding: 8px 0; border-bottom: 1px solid var(--rule); }
+.defects li:last-child { border-bottom: 0; }
+.defects .row { display: flex; justify-content: space-between; gap: 14px; font-size: 13px; }
+.defects .row span:first-child { color: var(--ink-2); }
+.defects .row span:last-child { font-family: var(--mono); white-space: nowrap; }
+.defects .bar { height: 3px; margin-top: 6px; background: var(--rule); }
+.defects .bar i { display: block; height: 100%; background: var(--bad); }
+
+/* ── 9. Графики и легенды ───────────────────────────────────────────────────*/
+.plot { display: block; width: 100%; height: 196px; }
+.plot--tall { height: 264px; }
+.plot--matrix { height: 232px; }
+.scene { display: block; width: 100%; height: min(54vh, 420px); touch-action: none; cursor: grab; }
+.scene:active { cursor: grabbing; }
+
+.legend { list-style: none; display: flex; flex-wrap: wrap; gap: 6px 20px; margin: 11px 0 0; padding: 0; font-size: 12.5px; }
+.legend li { display: flex; align-items: baseline; gap: 8px; }
+.legend button {
+  display: inline-flex; align-items: baseline; gap: 8px; padding: 2px 0;
+  border: 0; background: none; font: inherit; color: inherit; cursor: pointer;
+}
+.legend button:hover { color: var(--accent); }
+.legend button[aria-pressed="false"] { opacity: .4; }
+.legend .key { display: inline-block; width: 18px; border-top: 2px solid; }
+.legend .val { font-family: var(--mono); font-size: 12px; color: var(--ink-2); }
+.legend--matrix { gap: 5px 16px; font-size: 12px; color: var(--ink-2); }
+.legend .swatch { display: inline-block; width: 10px; height: 10px; }
+.swatch--ok { background: var(--ok); }
+.swatch--warn { background: var(--warn); }
+.swatch--bad { background: var(--bad); }
+.swatch--none { background: var(--rule); }
+/* Цвета заливки аппарата в 3D: те же токены, что рисуются на полотне. */
+.swatch--body { background: rgb(var(--body)); border: 1px solid var(--edge); }
+.swatch--panel { background: rgb(var(--panel)); border: 1px solid var(--edge); }
+.legend--states { flex-direction: column; gap: 7px; }
+
+/* ── 10. Формы и кнопки ─────────────────────────────────────────────────────*/
+.form--command { max-width: 560px; }
+.form .field { margin-bottom: 15px; }
+.form label, .form--rows label { display: block; margin-bottom: 4px; font-size: 13px; color: var(--ink-2); }
+.form--rows .row {
+  display: grid; grid-template-columns: 200px minmax(0, 330px);
+  gap: 3px 20px; align-items: center; padding: 11px 0;
+  border-bottom: 1px solid var(--rule);
+}
+.form--rows .row:last-of-type { border-bottom: 0; }
+.form--rows label { margin: 0; }
+.form--rows .field__hint { grid-column: 2; margin: 0; }
+.field__hint { margin: 4px 0 0; font-size: 11.5px; color: var(--ink-3); max-width: 62ch; }
+.field__error { margin: 0 0 11px; font-size: 12.5px; color: var(--bad); }
+
+input[type="text"], input[type="url"], input[type="number"], input[type="search"], select {
+  width: 100%; padding: 6px 9px;
+  border: 1px solid var(--rule-2); border-radius: 2px;
+  background: var(--surface); color: var(--ink);
+  font: 400 13.5px var(--sans);
+}
+input:focus, select:focus { border-color: var(--accent); }
+input:disabled { background: var(--hover); color: var(--ink-3); cursor: not-allowed; }
+
+.inline-field { display: inline-flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--ink-3); }
+.inline-field select, .inline-field input { width: auto; padding: 2px 6px; font-size: 12px; }
+.check { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--ink-2); }
+.check input { width: 14px; height: 14px; accent-color: var(--accent); }
+
+.btn {
+  font: 500 12.5px var(--sans); padding: 6px 12px;
+  border: 1px solid var(--rule-2); border-radius: 2px;
+  background: var(--surface); color: var(--ink); cursor: pointer;
+}
+.btn:hover { border-color: var(--ink-3); background: var(--hover); }
+.btn[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+.btn--primary { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+.btn--primary:hover { background: #000; border-color: #000; color: #fff; }
+:root[data-theme="dark"] .btn--primary:hover { background: #fff; border-color: #fff; color: #14171a; }
+.btn--quiet { border-color: var(--rule); background: none; color: var(--ink-2); }
+.btn--danger { color: var(--bad); border-color: color-mix(in srgb, var(--bad) 40%, var(--rule)); }
+.btn--icon { min-width: 34px; padding: 6px 9px; }
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+
+.actions { display: flex; flex-wrap: wrap; align-items: center; gap: 7px; margin-top: 13px; }
+.actions--stack { flex-direction: column; align-items: stretch; }
+.actions--stack .btn { width: 100%; }
+.check-result { font: 400 12px var(--mono); color: var(--ink-3); }
+.check-result[data-level="0"] { color: var(--ok); }
+.check-result[data-level="1"] { color: var(--warn); }
+.check-result[data-level="2"] { color: var(--bad); }
+
+.toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 18px; padding-bottom: 12px; }
+.toolbar .inline-field input { width: 210px; }
+#jrEventMeta { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px 12px; }
+#jrEventSearch { width: 150px; padding: 2px 6px; font-size: 12px; }
+.scroll-x { overflow-x: auto; }
+
+/* ── 11. Окно справки ──────────────────────────────────────────────────────*/
+.sheet {
+  width: min(640px, calc(100% - 32px)); max-height: 84vh;
+  padding: 0; border: 1px solid var(--rule-2); border-radius: 0;
+  background: var(--paper); color: var(--ink);
+}
+.sheet::backdrop { background: rgba(12, 14, 16, .45); }
+.sheet__head {
+  display: flex; align-items: center; justify-content: space-between; gap: 14px;
+  padding: 14px 22px; border-bottom: 1px solid var(--rule);
+}
+.sheet__head h2 { font: 600 11.5px/1.3 var(--sans); letter-spacing: .12em; text-transform: uppercase; }
+.sheet__body { padding: 0 22px 18px; overflow-y: auto; max-height: calc(84vh - 56px); }
+.sheet__body .block:first-child { padding-top: 18px; }
+
+.steps { counter-reset: step; list-style: none; margin: 0; padding: 0; }
+.steps li { position: relative; padding: 5px 0 5px 28px; font-size: 13px; color: var(--ink-2); }
+.steps li::before {
+  content: counter(step, decimal-leading-zero); position: absolute; left: 0; top: 7px;
+  font: 500 10.5px var(--mono); color: var(--ink-3);
+}
+.keys { list-style: none; margin: 0; padding: 0; }
+.keys li { display: flex; align-items: baseline; gap: 9px; padding: 4px 0; font-size: 13px; color: var(--ink-2); }
+.keys span { color: var(--ink-3); font-size: 12.5px; }
+kbd {
+  min-width: 19px; padding: 1px 5px; text-align: center;
+  border: 1px solid var(--rule-2); border-bottom-width: 2px; border-radius: 2px;
+  background: var(--surface); font: 500 11px var(--mono); color: var(--ink);
+}
+
+/* ── 12. Подвал и адаптив ──────────────────────────────────────────────────*/
+.colophon {
+  padding: 18px var(--pad) 40px;
+  border-top: 1px solid var(--rule); font-size: 12px; color: var(--ink-3);
+}
+.colophon p { margin: 0 0 4px; }
+
+/* Панель уходит вверх под шапку: на планшете места в три колонки нет. */
+@media (max-width: 1240px) {
+  :root { --rail: 260px; }
+  .col--main { padding-right: 30px; }
+  .col--aside { padding-left: 30px; }
+  :root { --instr: 272px; }
+  .col--instr { padding-left: 30px; }
+}
+
+/* Трёхколоночная раскладка обзора при приборах справа проверялась и
+   отброшена: на 1760 px графики занимали 1104 px, а на 1800 — 677 px,
+   то есть расширение окна сужало график. Ниже используется только
+   двухколоночная: приборы в правом ряду, таблицы под графиками.     */
+
+@media (max-width: 1080px) {
+  .shell { grid-template-columns: minmax(0, 1fr); }
+  .rail {
+    position: static; height: auto; overflow: visible;
+    display: grid; grid-template-columns: repeat(3, minmax(0, 1fr));
+    /* Без этого секции растягиваются до высоты соседней по строке, и под
+       блоком канала остаётся полоса пустоты высотой с таблицу приборов. */
+    align-items: start;
+    gap: 0 26px; padding-bottom: 0;
+    border-right: 0; border-bottom: 1px solid var(--rule);
+  }
+  .rail__section { border-bottom: 0; }
+  .rail__section--feed { grid-column: 1 / -1; }
+  .feed { max-height: 148px; }
+  .view__cols { grid-template-columns: minmax(0, 1fr); }
+  /* Правило приборов выше по specificity, чем .view__cols, поэтому одну
+     колонку приходится возвращать явно: без этого на телефоне графики
+     получают 116 px вместо всех 388. */
+  :root[data-instruments="right"] #view-overview .view__cols { grid-template-columns: minmax(0, 1fr); }
+  .col--main { padding-right: 0; }
+  .col--aside { padding-left: 0; border-left: 0; }
+  .col--aside .block { border-top: 1px solid var(--rule); }
+  /* Одна колонка: приборы, если они справа, идут в общий поток. Ставятся
+   первыми — это сводка состояния аппарата, и на узком экране её нельзя
+   отодвигать под дамп пакета. */
+  .col--instr { padding-left: 0; border-left: 0; }
+  :root[data-instruments="right"] #view-overview .col--instr { grid-column: 1; grid-row: 1; }
+  :root[data-instruments="right"] #view-overview .col--main { grid-column: 1; grid-row: 2; }
+  :root[data-instruments="right"] #view-overview .col--aside { grid-column: 1; grid-row: 3; padding-right: 0; }
+  :root[data-instruments="right"] #view-overview .col--aside > .block:first-child { padding-top: 22px; }
+}
+
+/* Шапка перестаёт помещаться в четыре колонки раньше, чем панель уходит
+   вверх: имя ~200, вердикт ~230, счётчики ~380, кнопки ~150, промежутки
+   84 — итого около 1080 px. Ниже этого вердикт сжимается до 70 px, а он
+   и есть ответ на вопрос о состоянии аппарата. Порог взят с запасом,
+   чтобы вердикт не прыгал между раскладками на границе.             */
+@media (max-width: 1120px) {
+  .masthead { grid-template-columns: minmax(0, 1fr) auto; row-gap: 11px; }
+  .masthead__id { grid-column: 1 / -1; }
+  .verdict { grid-column: 1; }
+  .masthead__tools { grid-column: 2; justify-self: end; }
+  .readouts { grid-column: 1 / -1; }
+}
+
+/* Панель из трёх колонок в одну не помещается раньше рабочей области */
+@media (max-width: 760px) {
+  .rail { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+}
+
+@media (max-width: 620px) {
+  :root { --pad: 16px; }
+  .masthead { grid-template-columns: minmax(0, 1fr); }
+  .verdict { grid-column: 1; flex-wrap: wrap; gap: 2px 10px; }
+  .verdict__word { font-size: 18px; }
+  .verdict__why { white-space: normal; }
+  .masthead__tools { grid-column: 1; justify-self: start; }
+  .readouts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 0; padding: 2px 0; }
+  .readout { padding: 0 14px 0 0; }
+  .readout:nth-child(odd) { border-left: 0; }
+  .readout:nth-child(even) { border-left: 1px solid var(--rule); padding-left: 14px; }
+  .rail { grid-template-columns: minmax(0, 1fr); }
+  .view { padding-bottom: 28px; }
+  .block { padding: 18px 0 16px; }
+  .block__head { flex-wrap: wrap; }
+  .block__meta { text-align: left; }
+  .form--rows .row { grid-template-columns: minmax(0, 1fr); }
+  .form--rows .field__hint { grid-column: 1; }
+  .plot { height: 164px; }
+  .plot--tall { height: 220px; }
+  .scene { height: 62vw; min-height: 250px; }
+  .toolbar .inline-field input { width: 100%; }
+  #jrEventMeta { justify-content: flex-start; }
+  #jrEventSearch { width: min(100%, 240px); }
+  .devices tbody tr { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 12px; }
+  .devices td { padding: 8px 0; }
+  .devices td:first-child { grid-column: 1; }
+  .devices td:last-child { grid-column: 2; grid-row: 1; text-align: right; }
+  .devices td:last-child .state__why { text-align: right; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chan[data-level="2"] .chan__glyph,
+  .verdict[data-level="2"] .verdict__word::after,
+  .state[data-level="2"].is-alarm::before { animation: none; }
+  .skiplink { transition: none; }
+}
+
+/* ── Аналитика телеметрии ─────────────────────────────────────────────── */
+.analysis-controls{display:flex;align-items:end;gap:14px;flex-wrap:wrap}
+.analysis-controls label{display:grid;gap:5px;color:var(--ink-3);font-size:12px;min-width:190px}
+.analysis-controls select{min-height:38px;max-width:100%;border:1px solid var(--rule-2);background:var(--surface);color:var(--ink);padding:7px 9px;font:inherit}
+.analysis-note{margin:13px 0 0;color:var(--ink-3);font-size:12px;max-width:900px}
+.analysis-kpis{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:0;border-bottom:1px solid var(--rule);margin:0 0 4px}
+.analysis-kpis>div{padding:17px 12px 18px 0;border-right:1px solid var(--rule);margin-right:12px;min-width:0}
+.analysis-kpis>div:last-child{border-right:0;margin-right:0}
+.analysis-kpis span{display:block;color:var(--ink-3);font-size:12px;margin-bottom:5px}
+.analysis-kpis strong{display:block;font:600 22px/1.2 var(--mono);overflow-wrap:anywhere}
+.analysis-chart{display:block;width:100%;height:250px;max-height:42vw;min-height:180px}
+.analysis-legend{display:flex;gap:18px;flex-wrap:wrap;color:var(--ink-3);font-size:12px;margin-top:8px}
+.analysis-legend i{display:inline-block;width:20px;border-top:2px solid var(--accent);vertical-align:middle;margin-right:6px}
+.analysis-legend .analysis-legend__outlier{border-color:var(--bad);border-top-style:dashed}
+.analysis-cell-warn{color:var(--bad);font-weight:600}
+@media(max-width:900px){.analysis-kpis{grid-template-columns:repeat(3,minmax(0,1fr))}.analysis-kpis>div:nth-child(3){border-right:0}.analysis-kpis>div:nth-child(n+4){border-top:1px solid var(--rule)}}
+@media(max-width:520px){.analysis-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.analysis-kpis>div:nth-child(odd){border-right:1px solid var(--rule)}.analysis-kpis>div:nth-child(even){border-right:0}.analysis-kpis>div:nth-child(n+3){border-top:1px solid var(--rule)}.analysis-controls label{width:100%;min-width:0}.analysis-chart{height:210px;max-height:none}}
+.analysis-tools { padding-top: 0; }
