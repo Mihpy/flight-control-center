@@ -4,7 +4,7 @@
   "description": "ИнтроСат · Пульт оператора ЦУП",
   "main": "main.js",
   "scripts": {
-    "start": "electron .",
+    "start": "node node_modules/electron/cli.js .",
     "build": "electron-builder --mac --win --linux",
     "build:mac": "electron-builder --mac",
     "build:win": "electron-builder --win",
