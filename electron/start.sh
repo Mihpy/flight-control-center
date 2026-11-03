@@ -1,51 +1,62 @@
 #!/bin/zsh
-# start.sh — запуск Electron-приложения ИнтроСат ЦУП
+# start.sh — запуск ИнтроСат ЦУП (Electron)
 #
-# Если приложение не запускается (SIGKILL от macOS Gatekeeper),
-# сначала выполни подпись бинарника:
+# Первый запуск на macOS: бинарник Electron нужно подписать.
+# Скрипт делает это автоматически.
 #
-#   ./start.sh --sign
-#
-# После этого обычный запуск:
-#
-#   ./start.sh          (или npm start)
+# Использование:
+#   ./start.sh          — запустить приложение
+#   ./start.sh --sign   — только подписать бинарник (если нужно вручную)
 
+set -e
 SCRIPT_DIR="${0:A:h}"
-ELECTRON="$SCRIPT_DIR/node_modules/electron/dist/Electron.app/Contents/MacOS/Electron"
+APP="$SCRIPT_DIR/node_modules/electron/dist/Electron.app"
+BIN="$APP/Contents/MacOS/Electron"
+ZIP="/tmp/electron-v31.zip"
 
-# Скачиваем бинарник если нет
-if [ ! -f "$ELECTRON" ] || [ "$(wc -c < "$ELECTRON")" -lt 1000000 ]; then
-  echo "⬇  Electron binary not found or too small, extracting from zip..."
-  if [ -f /tmp/electron-v31.zip ]; then
-    ditto -x -k /tmp/electron-v31.zip "$SCRIPT_DIR/node_modules/electron/dist/"
-  else
-    echo "❌  /tmp/electron-v31.zip not found."
-    echo "   Download it manually:"
-    echo "   curl -L 'https://github.com/electron/electron/releases/download/v31.7.7/electron-v31.7.7-darwin-arm64.zip' -o /tmp/electron-v31.zip"
-    echo "   Then run: ./start.sh"
-    exit 1
-  fi
+# ── Шаг 1: скачать бинарник если нет ──────────────────────────────────────
+if [ ! -f "$BIN" ] || [ "$(wc -c < "$BIN")" -lt 1000000 ]; then
+  echo "⬇  Downloading Electron v31 for macOS arm64..."
+  curl -L --progress-bar \
+    "https://github.com/electron/electron/releases/download/v31.7.7/electron-v31.7.7-darwin-arm64.zip" \
+    -o "$ZIP"
+  echo "📦 Extracting..."
+  rm -rf "$APP"
+  ditto -x -k "$ZIP" "$SCRIPT_DIR/node_modules/electron/dist/"
+  echo "✅ Extracted."
 fi
 
-# Подпись (нужна один раз на macOS 13+)
+# ── Шаг 2: подписать если нужно ───────────────────────────────────────────
+sign_app() {
+  echo "✍  Ad-hoc codesigning Electron.app..."
+  xattr -cr "$APP" 2>/dev/null || true
+
+  codesign --sign - --force "$BIN" 2>/dev/null
+  for helper in \
+    "$APP/Contents/Frameworks/Electron Helper.app" \
+    "$APP/Contents/Frameworks/Electron Helper (GPU).app" \
+    "$APP/Contents/Frameworks/Electron Helper (Plugin).app" \
+    "$APP/Contents/Frameworks/Electron Helper (Renderer).app"; do
+    [ -d "$helper" ] || continue
+    codesign --sign - --force "$helper/Contents/MacOS/"* 2>/dev/null
+    codesign --sign - --force "$helper" 2>/dev/null
+  done
+  FW="$APP/Contents/Frameworks/Electron Framework.framework/Electron Framework"
+  [ -f "$FW" ] && codesign --sign - --force "$FW" 2>/dev/null
+  codesign --sign - --force "$APP" 2>/dev/null
+  echo "✅ Signed."
+}
+
 if [ "$1" = "--sign" ]; then
-  echo "✍  Ad-hoc codesigning Electron.app (requires macOS developer tools)..."
-  APP="$SCRIPT_DIR/node_modules/electron/dist/Electron.app"
-  find "$APP" -name "*.dylib" -o -name "*.so" | while read f; do
-    codesign --sign - --force "$f" 2>/dev/null
-  done
-  find "$APP/Contents/Frameworks" -maxdepth 1 -name "*.framework" | while read f; do
-    codesign --sign - --force --deep "$f" 2>/dev/null
-  done
-  find "$APP/Contents/Frameworks" -maxdepth 1 -name "*.app" | while read f; do
-    codesign --sign - --force --deep "$f" 2>/dev/null
-  done
-  codesign --sign - --force "$APP/Contents/MacOS/Electron"
-  codesign --sign - --force --deep "$APP"
-  xattr -cr "$APP"
-  echo "✅  Done. Now run: ./start.sh"
+  sign_app
   exit 0
 fi
 
-# Запуск
-exec "$ELECTRON" "$SCRIPT_DIR" "$@"
+# Проверяем подпись; если не подписан — подписываем
+if ! codesign -v "$BIN" 2>/dev/null; then
+  sign_app
+fi
+
+# ── Шаг 3: запуск ─────────────────────────────────────────────────────────
+echo "🚀 Starting ИнтроСат ЦУП..."
+exec "$BIN" "$SCRIPT_DIR" "$@"
