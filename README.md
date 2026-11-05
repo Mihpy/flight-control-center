@@ -1,6 +1,35 @@
 # flight-control-center
 The project accepts and processes incoming data, generates statistics based on it, and visualizes it[README.md]
 
+# Badges
+
+![Electron](https://img.shields.io/badge/Electron-45.2.3-4784B6?style=flat-square&logo=electron)
+![Node.js](https://img.shields.io/badge/Node.js-22-339933?style=flat-square&logo=node.js)
+![HTML5](https://img.shields.io/badge/HTML5-E34F26?style=flat-square&logo=html5)
+![CSS3](https://img.shields.io/badge/CSS3-1572B6?style=flat-square&logo=css3)
+![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=flat-square&logo=javascript)
+![electron-builder](https://img.shields.io/badge/electron--builder-24.13.3-8D67D5?style=flat-square)
+
+---
+
+## Electron Desktop App
+
+This project is also packaged as a desktop application using **Electron**. It bundles the web interface (HTML/CSS/JavaScript) into native macOS, Windows, and Linux applications.
+
+### Quick start (Electron)
+
+```bash
+# Install dependencies (once)
+npm install
+
+# Run the Electron app locally
+npm start
+
+# Build for platforms
+# macOS:  npm run build:mac
+# Windows:npm run build:win
+# Linux:  npm run build:linux
+```
 # Пульт оператора ЦУП · «ИнтроСат»
 
 Прототип рабочего места оператора центра управления полётами учебного спутника
