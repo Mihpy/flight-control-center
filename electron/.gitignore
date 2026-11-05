@@ -1,3 +1,44 @@
+# See https://github.com/github/gitignore/blob/main/Node.gitignore
 node_modules/
+
+# See All https://github.com/github/gitignore/blob/main/Electron.gitignore
+# Electron specific
 dist/
+build/
+
+# Environment variables (uncomment if you use .env)
+# .env*
+# !*.env.example
+
+# OS specific
+.DS_Store
+npm-debug.log*
+yarn-debug.log*
+yarn.lock
+pnpm-lock.yaml
+
+# Production
+*.production.*
+
+# IDE
+.vscode/
+.idea/
+*.code-workspace
+
+# Electron packager / builder
+# If you use electron-builder, you may want to ignore the default output directory
+# dist/ is already ignored
+
+# TypeScript
+*.tsbuildinfo
+*.tslint
+
+# Electron
+electron/
+*.system.js
+
+# Logs
 *.log
+
+# Coverage
+coverage/

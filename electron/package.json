@@ -14,6 +14,7 @@
   "author": "ЦУП",
   "license": "MIT",
   "devDependencies": {
+    "electron": "^45.2.3",
     "electron-builder": "^24.0.0"
   },
   "build": {
